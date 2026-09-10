@@ -1,0 +1,18 @@
+# Virtual Environment & Python Cache
+venv/
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.pytest_cache/
+
+# Environment Variables & Local Config
+.env
+.env.local
+
+# Temp Output Artifacts & Log Storage
+*.pdf
+*.log
+research_log.json
+.DS_Store
+Thumbs.db
