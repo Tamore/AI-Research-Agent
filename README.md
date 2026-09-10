@@ -48,38 +48,19 @@
 
 ## 🏗️ System Architecture
 
-```text
- ┌────────────────────────────────────────────────────────┐
- │            User Query & Parameter Specs                │
- └────────────────────────────────────────────────────────┘
-                             │
-                             ▼
- ┌────────────────────────────────────────────────────────┐
- │                PlannerAgent (Ollama)                   │
- └────────────────────────────────────────────────────────┘
-                             │ (Sub-Queries)
-                             ▼
- ┌──────────────────────┐         ┌───────────────────────┐
- │   Academic Scraper   │ ──────> │ ArXiv / SemScholar API│
- └──────────────────────┘         └───────────────────────┘
-            │
-            ├─────────────────────────────┐
-            ▼                             ▼
- ┌──────────────────────┐     ┌────────────────────────┐
- │      PDFParser       │     │      FacultyRadar      │
- │ (Extracts Full-Text) │     │ (Maps PIs & Lab Focus) │
- └──────────────────────┘     └────────────────────────┘
-            │                             │
-            └──────────────┬──────────────┘
-                           ▼
- ┌────────────────────────────────────────────────────────┐
- │              SynthesizerAgent (Ollama)                 │
- └────────────────────────────────────────────────────────┘
-                           │
-        ┌──────────────────┴──────────────────┐
-        ▼                                     ▼
- [ Literature Review Matrix ]     [ IEEE / ACM PDF Compiler ]
- [ BibTeX References      ]     (Outputs .tex & .pdf paper)
+```mermaid
+graph TD
+    UserQuery["User Query & Parameter Specs"] --> PlannerAgent["PlannerAgent (Ollama)"]
+    PlannerAgent -->|Sub-Queries| AcademicScraper["Academic Scraper"]
+    AcademicScraper -->|API Queries| AcademicAPIs["ArXiv / SemScholar API"]
+    AcademicScraper -->|PDF URLs| PDFParser["PDFParser (Extracts Full-Text)"]
+    AcademicScraper -->|Author Data| FacultyRadar["FacultyRadar (Maps PIs & Lab Focus)"]
+    PDFParser -->|Extracted Text| SynthesizerAgent["SynthesizerAgent (Ollama)"]
+    FacultyRadar -->|Faculty Profiles| SynthesizerAgent
+    SynthesizerAgent --> LiteratureMatrix["Literature Review Matrix"]
+    SynthesizerAgent --> BibTeXRefs["BibTeX References"]
+    SynthesizerAgent --> PDFCompiler["IEEE / ACM PDF Compiler"]
+    PDFCompiler --> PDFDraft["Compiled PDF & LaTeX (.tex) Draft"]
 ```
 
 ---
