@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>AI Academic Research Assistant</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg-dark: #0b0f19;
+      --panel-bg: #151c2c;
+      --card-bg: #1e293b;
+      --accent-blue: #38bdf8;
+      --accent-indigo: #818cf8;
+      --text-main: #f8fafc;
+      --text-muted: #94a3b8;
+      --border-color: #334155;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: 'Inter', sans-serif;
+      background: var(--bg-dark);
+      color: var(--text-main);
+      width: 380px;
+      padding: 1.25rem;
+    }
+
+    header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 1.2rem;
+      border-bottom: 1px solid var(--border-color);
+      padding-bottom: 0.75rem;
+    }
+    header h1 { font-size: 1.05rem; font-weight: 700; background: linear-gradient(135deg, var(--accent-blue), var(--accent-indigo)); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+    .status-dot { width: 8px; height: 8px; border-radius: 50%; background: #ef4444; }
+    .status-dot.online { background: #22c55e; box-shadow: 0 0 8px #22c55e; }
+
+    .card {
+      background: var(--panel-bg);
+      border: 1px solid var(--border-color);
+      border-radius: 10px;
+      padding: 1rem;
+      margin-bottom: 1rem;
+    }
+
+    .form-group { margin-bottom: 1rem; }
+    label { display: block; font-size: 0.8rem; font-weight: 600; color: var(--text-muted); margin-bottom: 0.4rem; }
+    input[type="text"], textarea {
+      width: 100%;
+      background: var(--card-bg);
+      border: 1px solid var(--border-color);
+      color: var(--text-main);
+      padding: 0.6rem 0.8rem;
+      border-radius: 6px;
+      font-size: 0.85rem;
+      outline: none;
+    }
+
+    .btn-action {
+      width: 100%;
+      background: linear-gradient(135deg, var(--accent-blue), var(--accent-indigo));
+      color: #0b0f19;
+      font-weight: 700;
+      padding: 0.75rem;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+      font-size: 0.9rem;
+      margin-bottom: 0.5rem;
+    }
+
+    .btn-secondary {
+      width: 100%;
+      background: var(--card-bg);
+      color: var(--text-main);
+      border: 1px solid var(--border-color);
+      font-weight: 600;
+      padding: 0.6rem;
+      border-radius: 6px;
+      cursor: pointer;
+      font-size: 0.85rem;
+    }
+
+    .output-box {
+      background: #070a12;
+      border: 1px solid var(--border-color);
+      border-radius: 6px;
+      padding: 0.8rem;
+      font-size: 0.8rem;
+      max-height: 180px;
+      overflow-y: auto;
+      color: var(--accent-blue);
+      white-space: pre-wrap;
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>🔬 Research Assistant</h1>
+    <div style="display:flex; align-items:center; gap:6px;">
+      <span id="apiDot" class="status-dot"></span>
+      <span id="apiLabel" style="font-size:0.75rem; color:var(--text-muted)">API Offline</span>
+    </div>
+  </header>
+
+  <div class="card">
+    <div class="form-group">
+      <label>Active Page / Selection</label>
+      <input type="text" id="pageTitle" readonly style="font-size:0.78rem; opacity:0.8;">
+    </div>
+
+    <div class="form-group">
+      <label>Research Topic / Query</label>
+      <input type="text" id="queryInput" placeholder="Enter query or auto-parse page...">
+    </div>
+
+    <button class="btn-action" id="parseBtn">⚡ Synthesize & Add to Notes</button>
+    <button class="btn-secondary" id="saveNoteBtn">📝 Quick Note Active Tab</button>
+  </div>
+
+  <div class="card" style="margin-bottom:0;">
+    <label>Agent Output / Notes</label>
+    <div class="output-box" id="outputBox">Ready. Open any paper/webpage tab and click 'Synthesize' to extract insights.</div>
+  </div>
+
+  <script src="popup.js"></script>
+</body>
+</html>
