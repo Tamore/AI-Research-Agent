@@ -1,89 +1,126 @@
 # 🔬 AI Academic Research Agent
 
 <p align="center">
-  <img src="https://img.shields.io/badge/Ollama-Native-000000?style=for-the-badge&logo=ollama&logoColor=white" alt="Ollama" />
+  <img src="https://img.shields.io/badge/Ollama-Native_100%25_Local-000000?style=for-the-badge&logo=ollama&logoColor=white" alt="Ollama" />
   <img src="https://img.shields.io/badge/Python-3.11+-3776AB?style=for-the-badge&logo=python&logoColor=white" alt="Python" />
   <img src="https://img.shields.io/badge/FastAPI-0.110+-009688?style=for-the-badge&logo=fastapi&logoColor=white" alt="FastAPI" />
-  <img src="https://img.shields.io/badge/Docker-Supported-2496ED?style=for-the-badge&logo=docker&logoColor=white" alt="Docker" />
+  <img src="https://img.shields.io/badge/PDF_Compiler-IEEEtran_LaTeX-2496ED?style=for-the-badge" alt="IEEE PDF" />
   <img src="https://img.shields.io/badge/License-MIT-green?style=for-the-badge" alt="License" />
 </p>
 
-> An autonomous multi-step research agent powered natively by **local Ollama LLMs**. It queries academic databases (ArXiv, Semantic Scholar), parses paper PDFs, tracks active professors/labs in target countries (e.g. Japan), maintains a persistent **Research Work Log**, and compiles formal **IEEE / ACM styled LaTeX and PDF research paper drafts**.
+> An autonomous multi-agent academic research assistant powered natively by **local Ollama LLMs**. It queries peer-reviewed literature repositories (ArXiv, Semantic Scholar), parses paper PDFs, tracks active faculty/labs by region (e.g. Japan), maintains a persistent **Research Work Log**, and compiles formal **IEEE / ACM styled LaTeX and PDF paper drafts**.
 
 ---
 
-## ✨ Key Features
+## 🛠️ Technical Stack
 
-- 🏠 **100% Local & Private (Ollama Native):** Powered by local Ollama models (`llama3.2`, `mistral`, `qwen2.5`) for zero-cost, private research synthesis.
-- 📑 **Peer-Reviewed Search:** Queries ArXiv and Semantic Scholar APIs directly.
-- ⚡ **PDF Extraction:** Extracts methodology, algorithms, and evaluation metrics directly from paper PDFs.
-- ⛩️ **Faculty & Lab Radar:** Tracks active professors and research labs in specific target countries (e.g. Japan) along with their latest 2024–2026 breakthroughs.
-- 📄 **IEEE / ACM Paper & PDF Compiler:** Converts literature synthesis into formal **IEEE 2-column LaTeX drafts (`.tex`)** and compiles ready-to-read PDF reports.
-- 📋 **Persistent Research Work Log:** Saves all session queries, parsed notes, and faculty matches into a structured work log file.
-- 🎓 **BibTeX Export:** Generates valid `.bib` reference blocks for Overleaf / LaTeX insertion.
-- 🐳 **Docker Ready:** Single command execution with Docker Compose.
+- **Core Runtime:** Python 3.11+ / FastAPI (Asynchronous Execution)
+- **Local LLM Engine:** Ollama (`llama3.2`, `mistral`, `qwen2.5`) via `http://localhost:11434`
+- **Academic Scrapers:** ArXiv API, Semantic Scholar Graph API
+- **PDF Extraction:** `pdfplumber` / PyPDF
+- **Document Compilers:** ReportLab (PDF Exporter) & `IEEEtran` LaTeX Generator
+- **Frontend Console:** Industry Blueprint UI with Marked.js Markdown/Table rendering
 
 ---
 
-## 🏗️ Architecture Overview
+## ✨ Core Features & Architecture
+
+### 1. 🏠 100% Local & Private (Ollama Native)
+- Performs local LLM synthesis via Ollama with zero token costs and complete data privacy.
+- Includes automatic fallback query expansion when running offline.
+
+### 2. 📑 Multi-Source Academic Scraping & PDF Parsing
+- Queries ArXiv and Semantic Scholar APIs directly.
+- Downloads paper PDFs and extracts full text, methodology, and evaluation metrics using `pdfplumber`.
+
+### 3. ⛩️ Faculty & Regional Research Radar
+- Filters authors and labs by target country/region (e.g. *Japan — Imperial Universities*).
+- Profiles top principal investigators (PIs) and maps their latest 2024–2026 breakthroughs against your query.
+
+### 4. 📄 IEEE / ACM Paper & PDF Compiler
+- Automatically generates two-column **IEEE LaTeX source code (`.tex`)** complete with *Abstract, Introduction, Comparative Analysis, and BibTeX References*.
+- Compiles a styled **PDF document (`ieee_paper_draft.pdf`)** ready for immediate download.
+
+### 5. 📋 Persistent Research Work Log
+- Maintains a persistent session history in `research_log.json`, queryable via `GET /api/v1/history`.
+
+---
+
+## 🏗️ System Architecture
 
 ```text
-  [ User Query + Target Region (e.g., "Japan") ]
-                       │
-                       ▼
-┌──────────────────────────────────────────────┐
-│           Planner Agent (Ollama)             │ ──( Generates Sub-Queries )
-└──────────────────────────────────────────────┘
-                       │
-                       ▼
-┌──────────────────────┐     ┌───────────────────────┐
-│   Academic Scraper   │ ──> │ ArXiv / SemScholar API│
-└──────────────────────┘     └───────────────────────┘
-           │
-           ├────────────────────────────┐
-           ▼                            ▼
-┌──────────────────────┐    ┌────────────────────────┐
-│      PDF Parser      │    │  Faculty & Lab Radar   │
-│(Extracts Methodology)│    │(Maps Professors & Labs)│
-└──────────────────────┘    └────────────────────────┘
-           │                            │
-           └──────────────┬─────────────┘
-                          ▼
-┌──────────────────────────────────────────────┐
-│        Synthesizer Agent (Ollama)            │ ──> [ Persistent Work Log ]
-└──────────────────────────────────────────────┘
-                          │
-       ┌──────────────────┴──────────────────┐
-       ▼                                     ▼
-[ Markdown Report & BibTeX ]     [ IEEE / ACM PDF Compiler ]
-                                 (Outputs .tex & .pdf paper)
+ ┌────────────────────────────────────────────────────────┐
+ │            User Query & Parameter Specs                │
+ └────────────────────────────────────────────────────────┘
+                             │
+                             ▼
+ ┌────────────────────────────────────────────────────────┐
+ │                PlannerAgent (Ollama)                   │
+ └────────────────────────────────────────────────────────┘
+                             │ (Sub-Queries)
+                             ▼
+ ┌──────────────────────┐         ┌───────────────────────┐
+ │   Academic Scraper   │ ──────> │ ArXiv / SemScholar API│
+ └──────────────────────┘         └───────────────────────┘
+            │
+            ├─────────────────────────────┐
+            ▼                             ▼
+ ┌──────────────────────┐     ┌────────────────────────┐
+ │      PDFParser       │     │      FacultyRadar      │
+ │ (Extracts Full-Text) │     │ (Maps PIs & Lab Focus) │
+ └──────────────────────┘     └────────────────────────┘
+            │                             │
+            └──────────────┬──────────────┘
+                           ▼
+ ┌────────────────────────────────────────────────────────┐
+ │              SynthesizerAgent (Ollama)                 │
+ └────────────────────────────────────────────────────────┘
+                           │
+        ┌──────────────────┴──────────────────┐
+        ▼                                     ▼
+ [ Literature Review Matrix ]     [ IEEE / ACM PDF Compiler ]
+ [ BibTeX References      ]     (Outputs .tex & .pdf paper)
 ```
 
 ---
 
 ## 🚀 Quickstart Guide
 
-### 1. Ensure Ollama is Running
-Make sure [Ollama](https://ollama.com) is installed and running locally:
+### 1. Prerequisite: Local Ollama Setup
+Ensure [Ollama](https://ollama.com) is installed and running locally:
 ```bash
 ollama run llama3.2
 ```
 
-### 2. Clone & Setup Environment
+### 2. Clone & Install Dependencies
 ```bash
 cd ai_academic_research_agent
 python -m venv venv
-source venv/bin/activate  # On Windows: venv\Scripts\activate
+source venv/bin/activate  # On Windows: .\venv\Scripts\activate
 pip install -r requirements.txt
 ```
 
-### 3. Run FastAPI Server
+### 3. Launch the Server
 ```bash
-uvicorn app.main:app --reload --port 8000
+uvicorn app.main:app --host 127.0.0.1 --port 8000 --reload
 ```
-Open [http://localhost:8000/docs](http://localhost:8000/docs) to access the interactive Swagger API documentation.
+
+### 4. Open the Web Console
+Navigate to **`http://127.0.0.1:8000`** in your browser to launch research queries, view live agent trace logs, inspect literature matrices, and download compiled IEEE PDF drafts!
+
+---
+
+## 📡 API Specification
+
+| Endpoint | Method | Description |
+| :--- | :--- | :--- |
+| `/` | `GET` | Serves the interactive Web Console UI |
+| `/health` | `GET` | Checks local Ollama connectivity and model status |
+| `/api/v1/research` | `POST` | Executes complete multi-step research pipeline |
+| `/api/v1/download-pdf` | `GET` | Downloads compiled IEEE PDF paper draft |
+| `/api/v1/history` | `GET` | Fetches persistent research session log history |
 
 ---
 
 ## 📄 License
-Distributed under the **MIT License**. See `LICENSE` for more details.
+Distributed under the **MIT License**.

@@ -1,3 +1,7 @@
+# Internal Specs (Not Pushed to Git)
+PRD.md
+IMPLEMENTATION_PLAN.md
+
 # Virtual Environment & Python Cache
 venv/
 __pycache__/
