@@ -2,8 +2,9 @@
   "manifest_version": 3,
   "name": "AI Academic Research Assistant",
   "version": "1.0.0",
-  "description": "Parse, summarize, track faculty, and note down academic insights from any active webpage.",
+  "description": "Live right-side panel assistant to parse, summarize, extract BibTeX, and log academic insights from any Chrome tab.",
   "permissions": [
+    "sidePanel",
     "activeTab",
     "scripting",
     "storage"
@@ -13,13 +14,11 @@
     "http://localhost:8000/*",
     "https://*/*"
   ],
+  "side_panel": {
+    "default_path": "sidepanel.html"
+  },
   "action": {
-    "default_popup": "popup.html",
-    "default_icon": {
-      "16": "icons/icon16.png",
-      "48": "icons/icon48.png",
-      "128": "icons/icon128.png"
-    }
+    "default_title": "Open Research Side Panel"
   },
   "background": {
     "service_worker": "background.js"
