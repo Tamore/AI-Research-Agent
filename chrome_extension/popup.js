@@ -1,7 +1,9 @@
 const API_BASE = "http://127.0.0.1:8000";
 
-let currentData = null;
-let activeTabName = 'summary';
+let state = {
+  view: "summary",
+  report: null
+};
 
 document.addEventListener("DOMContentLoaded", async () => {
   checkApiHealth();
@@ -9,16 +11,25 @@ document.addEventListener("DOMContentLoaded", async () => {
 
   document.getElementById("parseBtn").addEventListener("click", runResearch);
   document.getElementById("saveNoteBtn").addEventListener("click", saveQuickNote);
+  document.getElementById("copyBib").addEventListener("click", copyBibTeX);
 
-  document.querySelectorAll(".tab").forEach(tabEl => {
-    tabEl.addEventListener("click", (e) => {
-      document.querySelectorAll(".tab").forEach(t => t.classList.remove("active"));
-      e.target.classList.add("active");
-      activeTabName = e.target.getAttribute("data-tab");
-      renderTabOutput();
+  document.querySelectorAll("[data-go]").forEach(btn => {
+    btn.addEventListener("click", (e) => {
+      const viewKey = e.target.getAttribute("data-go");
+      goView(viewKey);
     });
   });
 });
+
+function goView(viewKey) {
+  state.view = viewKey;
+  document.querySelectorAll(".nav-tab").forEach(tab => {
+    tab.setAttribute("aria-current", String(tab.getAttribute("data-go") === viewKey));
+  });
+  document.querySelectorAll(".view").forEach(v => {
+    v.classList.toggle("on", v.getAttribute("data-view") === viewKey);
+  });
+}
 
 async function checkApiHealth() {
   const badge = document.getElementById("apiStatus");
@@ -26,11 +37,14 @@ async function checkApiHealth() {
     const res = await fetch(`${API_BASE}/health`);
     if (res.ok) {
       badge.innerText = "API Online";
-      badge.style.color = "#38bdf8";
+      badge.className = "tag tag-outline";
+    } else {
+      badge.innerText = "API Error";
     }
   } catch (err) {
     badge.innerText = "API Offline";
-    badge.style.color = "#ef4444";
+    badge.style.color = "#a6595b";
+    badge.style.borderColor = "#a6595b";
   }
 }
 
@@ -42,16 +56,12 @@ function extractActiveTabInfo() {
     if (!tabs || !tabs[0]) return;
 
     const currentTab = tabs[0];
-    titleInput.value = currentTab.title || currentTab.url || "Active Tab";
+    titleInput.value = currentTab.title || currentTab.url || "Active Tab Context";
     topicInput.value = currentTab.title || "";
 
-    // Safely send message to content script
     try {
       chrome.tabs.sendMessage(currentTab.id, { action: "extract_page_content" }, (response) => {
-        if (chrome.runtime.lastError) {
-          // Content script not loaded on chrome:// or extension pages, ignore gracefully
-          return;
-        }
+        if (chrome.runtime.lastError) return;
         if (response && response.selected_text) {
           topicInput.value = response.selected_text;
         }
@@ -63,17 +73,19 @@ function extractActiveTabInfo() {
 }
 
 async function runResearch() {
-  const topic = document.getElementById("topicInput").value;
+  const topic = document.getElementById("topicInput").value.trim();
   const region = document.getElementById("regionInput").value;
   const maxPapers = parseInt(document.getElementById("maxPapers").value, 10) || 2;
-  const outputContainer = document.getElementById("outputContainer");
+  const parseBtn = document.getElementById("parseBtn");
 
   if (!topic) {
     document.getElementById("topicInput").focus();
     return;
   }
 
-  outputContainer.innerHTML = '<p style="color:var(--accent-blue)">⚡ Executing research pipeline & parsing PDFs...</p>';
+  parseBtn.disabled = true;
+  parseBtn.innerText = "Running…";
+  setAllOutputsLoading();
 
   try {
     const res = await fetch(`${API_BASE}/api/v1/research`, {
@@ -88,13 +100,75 @@ async function runResearch() {
     });
 
     if (res.ok) {
-      currentData = await res.json();
-      renderTabOutput();
+      state.report = await res.json();
+      renderAllViews();
+      goView("summary");
     } else {
-      outputContainer.innerHTML = '<p style="color:#ef4444">Error executing research API.</p>';
+      showError("API error occurred while processing research request.");
     }
   } catch (err) {
-    outputContainer.innerHTML = '<p style="color:#ef4444">Error: Could not connect to local agent server at http://127.0.0.1:8000</p>';
+    showError("Could not connect to local agent server at http://127.0.0.1:8000");
+  } finally {
+    parseBtn.disabled = false;
+    parseBtn.innerText = "Launch Pipeline";
+  }
+}
+
+function setAllOutputsLoading() {
+  const msg = '<p class="mono" style="color:var(--color-accent)">⚡ Executing research pipeline & parsing PDFs…</p>';
+  document.getElementById("summaryOut").innerHTML = msg;
+  document.getElementById("matrixOut").innerHTML = msg;
+  document.getElementById("facultyOut").innerHTML = msg;
+  document.getElementById("papersOut").innerHTML = msg;
+  document.getElementById("bibOut").textContent = "% compiling references…";
+  document.getElementById("pdfOut").innerHTML = msg;
+}
+
+function renderAllViews() {
+  const r = state.report;
+  if (!r) return;
+
+  // 02 Summary
+  document.getElementById("summaryOut").innerHTML = md(r.summary_markdown) || '<p class="mono">Summary empty.</p>';
+
+  // 03 Matrix
+  document.getElementById("matrixOut").innerHTML = md(r.literature_matrix) || '<p class="mono">No matrix returned.</p>';
+
+  // 04 Faculty
+  const fac = r.faculty_radar || [];
+  document.getElementById("facultyOut").innerHTML = fac.length ? fac.map(f => {
+    const pct = Math.round((Number(f.alignment_score) || 0) * 100);
+    return `<div style="padding:6px; border-bottom:1px solid var(--color-divider);">
+      <div style="display:flex;justify-content:space-between;align-items:center;">
+        <b>${esc(f.name)}</b> <span class="tag tag-outline">${pct}%</span>
+      </div>
+      <div class="mono" style="font-size:11px;">${esc(f.university_or_lab)} · ${esc(f.country)}</div>
+      <div style="font-size:12px;margin-top:2px;">Latest: ${esc(f.latest_paper_title)}</div>
+    </div>`;
+  }).join("") : '<p class="mono">No faculty profiles matched.</p>';
+
+  // 05 Papers
+  const papers = r.analyzed_papers || [];
+  document.getElementById("papersOut").innerHTML = papers.length ? papers.map(p => {
+    return `<div style="padding:6px; border-bottom:1px solid var(--color-divider);">
+      <div style="font-weight:600;font-size:13px;">${esc(p.title)}</div>
+      <div class="mono" style="font-size:11px;">${esc(p.authors.join(", "))} (${p.year})</div>
+      <a href="${esc(p.pdf_url)}" target="_blank" class="mono" style="font-size:11px;">[View Source PDF]</a>
+    </div>`;
+  }).join("") : '<p class="mono">No papers parsed.</p>';
+
+  // 06 BibTeX
+  document.getElementById("bibOut").textContent = r.bibtex_citations || "% no citations generated";
+
+  // 07 IEEE PDF
+  if (r.pdf_download_url) {
+    const pdfUrl = `${API_BASE}${r.pdf_download_url}`;
+    document.getElementById("pdfOut").innerHTML = `<div style="text-align:center; padding: 1rem;">
+      <h4 style="margin-bottom:8px;">IEEE Paper Draft Compiled</h4>
+      <a href="${pdfUrl}" target="_blank" class="btn btn-primary" style="text-decoration:none;display:inline-block;width:auto;">Download PDF</a>
+    </div>`;
+  } else {
+    document.getElementById("pdfOut").innerHTML = '<p class="mono">PDF compilation disabled.</p>';
   }
 }
 
@@ -103,34 +177,27 @@ function saveQuickNote() {
     if (tabs && tabs[0]) {
       const title = tabs[0].title;
       const url = tabs[0].url;
-      const dateStr = new Date().toLocaleString();
-
-      const noteText = `### 📝 Quick Research Note\n- **Title:** ${title}\n- **URL:** ${url}\n- **Saved:** ${dateStr}\n\n*Tab added to persistent research work log.*`;
-      
-      const outputContainer = document.getElementById("outputContainer");
-      outputContainer.innerHTML = window.marked ? window.marked.parse(noteText) : `<pre>${noteText}</pre>`;
+      const noteText = `## Quick Note\n- **Title:** ${title}\n- **URL:** [${url}](${url})\n\nSaved to local research session.`;
+      document.getElementById("summaryOut").innerHTML = md(noteText);
+      goView("summary");
     }
   });
 }
 
-function renderTabOutput() {
-  const container = document.getElementById("outputContainer");
-  if (!currentData) {
-    container.innerHTML = '<p style="color: var(--text-muted);">Ready. Click \'Synthesize Query\' or \'Quick Tab Note\' to extract academic insights.</p>';
-    return;
-  }
+function copyBibTeX() {
+  const txt = document.getElementById("bibOut").textContent;
+  const btn = document.getElementById("copyBib");
+  navigator.clipboard.writeText(txt).then(() => {
+    btn.textContent = "Copied!";
+    setTimeout(() => { btn.textContent = "Copy references.bib"; }, 1600);
+  });
+}
 
-  if (activeTabName === 'summary') {
-    container.innerHTML = window.marked ? window.marked.parse(currentData.summary_markdown || '') : `<pre>${currentData.summary_markdown}</pre>`;
-  } else if (activeTabName === 'matrix') {
-    container.innerHTML = window.marked ? window.marked.parse(currentData.literature_matrix || '') : `<pre>${currentData.literature_matrix}</pre>`;
-  } else if (activeTabName === 'bibtex') {
-    container.innerHTML = `<pre class="code-block">${currentData.bibtex_citations}</pre>`;
-  } else if (activeTabName === 'pdf') {
-    const pdfUrl = `${API_BASE}${currentData.pdf_download_url}`;
-    container.innerHTML = `<div style="text-align:center; padding: 1.5rem 0.5rem;">
-      <h4 style="margin-bottom:0.8rem; color:var(--text-main);">📄 IEEE Paper PDF Draft Compiled!</h4>
-      <a href="${pdfUrl}" target="_blank" style="background:linear-gradient(135deg, var(--accent-blue), var(--accent-indigo)); color:#0b0f19; padding:0.6rem 1.2rem; text-decoration:none; font-weight:700; border-radius:6px; display:inline-block;">Download ieee_paper_draft.pdf</a>
-    </div>`;
-  }
+function md(src) {
+  if (!src) return "";
+  return window.marked ? window.marked.parse(src) : `<pre class="mono">${esc(src)}</pre>`;
+}
+
+function esc(s) {
+  return String(s == null ? "" : s).replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
 }

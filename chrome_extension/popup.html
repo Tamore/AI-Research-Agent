@@ -1,176 +1,199 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Academic Research Agent — Extension</title>
-  <link href="https://fonts.googleapis.com/css2?family=Barlow:wght@400;500;600&family=Barlow+Condensed:wght@500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
-  <script src="marked.min.js"></script>
-  <style>
-    :root {
-      --bg-dark: #0b0f19;
-      --panel-bg: #151c2c;
-      --card-bg: #1e293b;
-      --accent-blue: #38bdf8;
-      --accent-indigo: #818cf8;
-      --text-main: #f8fafc;
-      --text-muted: #94a3b8;
-      --border-color: #334155;
-      --font-heading: 'Barlow Condensed', sans-serif;
-      --font-mono: 'IBM Plex Mono', monospace;
-    }
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Academic Research Agent — Extension</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Barlow:wght@400;500;600&family=Barlow+Condensed:wght@500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<script src="marked.min.js"></script>
+<style>
+:root {
+  --color-bg: #f2f2f3;
+  --color-surface: #f2f2f3;
+  --color-text: #1d1f20;
+  --color-accent: #5980a6;
+  --color-divider: color-mix(in srgb, #1d1f20 16%, transparent);
 
-    * { box-sizing: border-box; margin: 0; padding: 0; }
-    body {
-      font-family: 'Barlow', sans-serif;
-      background: var(--bg-dark);
-      color: var(--text-main);
-      width: 420px;
-      padding: 1.2rem;
-    }
+  --color-neutral-100: #eeeeef; --color-neutral-800: #3c3c3e; --color-neutral-900: #2b2b2d;
+  --color-accent-100: #eef6ff; --color-accent-200: #d6ebff; --color-accent-300: #b5d9fd;
+  --color-accent-400: #94bce3; --color-accent-500: #749dc4; --color-accent-600: #597ea3;
+  --color-accent-700: #416180; --color-accent-800: #2c455d; --color-accent-900: #1d2d3d;
 
-    header {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      margin-bottom: 1rem;
-      border-bottom: 1px solid var(--border-color);
-      padding-bottom: 0.75rem;
-    }
-    header h1 {
-      font-family: var(--font-heading);
-      font-size: 1.2rem;
-      font-weight: 700;
-      letter-spacing: -0.01em;
-      background: linear-gradient(135deg, var(--accent-blue), var(--accent-indigo));
-      -webkit-background-clip: text;
-      -webkit-text-fill-color: transparent;
-    }
-    .badge {
-      background: rgba(56, 189, 248, 0.15);
-      color: var(--accent-blue);
-      border: 1px solid var(--accent-blue);
-      padding: 0.25rem 0.6rem;
-      border-radius: 999px;
-      font-size: 0.7rem;
-      font-weight: 600;
-      font-family: var(--font-mono);
-    }
+  --font-heading: "Barlow Condensed", system-ui, sans-serif;
+  --font-heading-weight: 600;
+  --font-body: "Barlow", system-ui, sans-serif;
+  --font-mono: "IBM Plex Mono", ui-monospace, monospace;
 
-    .card {
-      background: var(--panel-bg);
-      border: 1px solid var(--border-color);
-      border-radius: 10px;
-      padding: 1.1rem;
-      margin-bottom: 1rem;
-      box-shadow: 0 8px 24px rgba(0, 0, 0, 0.3);
-    }
+  --space-1: 3.4px; --space-2: 6.8px; --space-3: 10.2px;
+  --space-4: 13.6px; --space-6: 20.4px;
+}
 
-    .form-group { margin-bottom: 0.9rem; }
-    label { display: block; font-size: 0.78rem; font-weight: 600; color: var(--text-muted); margin-bottom: 0.35rem; }
-    input[type="text"], select, input[type="number"] {
-      width: 100%;
-      background: var(--card-bg);
-      border: 1px solid var(--border-color);
-      color: var(--text-main);
-      padding: 0.6rem 0.8rem;
-      border-radius: 6px;
-      font-size: 0.85rem;
-      outline: none;
-    }
-    input:focus, select:focus { border-color: var(--accent-blue); }
+*, *::before, *::after { box-sizing: border-box; }
+body {
+  margin: 0; background: var(--color-bg); color: var(--color-text);
+  font-family: var(--font-body); font-size: 14px; line-height: 1.5;
+  width: 440px; min-height: 540px; padding: var(--space-4);
+}
+h1, h2, h3, h4 { font-family: var(--font-heading); font-weight: var(--font-heading-weight); margin: 0 0 var(--space-2); }
+p { margin: 0 0 var(--space-2); }
+a { color: var(--color-accent); text-underline-offset: 2px; }
 
-    .btn-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 0.6rem; margin-top: 0.5rem; }
-    .btn-action {
-      background: linear-gradient(135deg, var(--accent-blue), var(--accent-indigo));
-      color: #0b0f19;
-      font-weight: 700;
-      padding: 0.7rem;
-      border: none;
-      border-radius: 6px;
-      cursor: pointer;
-      font-size: 0.85rem;
-    }
-    .btn-secondary {
-      background: var(--card-bg);
-      color: var(--text-main);
-      border: 1px solid var(--border-color);
-      font-weight: 600;
-      padding: 0.7rem;
-      border-radius: 6px;
-      cursor: pointer;
-      font-size: 0.85rem;
-    }
+/* ── Industry Blueprint Components ──────────────────────────────────────── */
+.blueprint { position: relative; border: 1px solid var(--color-divider); border-radius: 0; background: transparent; }
+.blueprint > .corner { position: absolute; width: 9px; height: 9px; color: color-mix(in srgb, var(--color-text) 55%, transparent); }
+.blueprint > .corner::before, .blueprint > .corner::after { content: ""; position: absolute; background: currentColor; }
+.blueprint > .corner::before { left: 4px; top: 0; width: 1px; height: 100%; }
+.blueprint > .corner::after { top: 4px; left: 0; width: 100%; height: 1px; }
+.corner.tl { top: -5px; left: -5px; } .corner.tr { top: -5px; right: -5px; }
+.corner.bl { bottom: -5px; left: -5px; } .corner.br { bottom: -5px; right: -5px; }
 
-    .tabs { display: flex; gap: 0.4rem; border-bottom: 1px solid var(--border-color); padding-bottom: 0.5rem; margin-bottom: 0.8rem; }
-    .tab { padding: 0.4rem 0.7rem; cursor: pointer; border-radius: 4px; font-size: 0.78rem; font-weight: 600; color: var(--text-muted); }
-    .tab.active { background: var(--card-bg); color: var(--accent-blue); border: 1px solid var(--border-color); }
+.btn {
+  display: inline-flex; align-items: center; justify-content: center; gap: 4px;
+  cursor: pointer; font-family: var(--font-heading); font-weight: var(--font-heading-weight);
+  font-size: 13px; line-height: 1.2; color: var(--color-text);
+  background: transparent; border: 1px solid var(--color-divider); border-radius: 0;
+  padding: 6px 12px; white-space: nowrap; width: 100%;
+}
+.btn-primary { background: var(--color-accent); color: var(--color-bg); border-color: var(--color-accent); }
+.btn-primary:hover { background: var(--color-accent-600); }
+.btn-secondary:hover { background: color-mix(in srgb, var(--color-text) 7%, transparent); }
 
-    .output-container {
-      background: #070a12;
-      border: 1px solid var(--border-color);
-      border-radius: 6px;
-      padding: 0.9rem;
-      font-size: 0.82rem;
-      max-height: 200px;
-      overflow-y: auto;
-      color: #e2e8f0;
-      line-height: 1.5;
-    }
-    pre.code-block { font-family: var(--font-mono); font-size: 0.75rem; color: var(--accent-blue); white-space: pre-wrap; word-break: break-all; }
-  </style>
+.field > label { display: block; font-size: 11px; margin-bottom: 3px; color: color-mix(in srgb, var(--color-text) 70%, transparent); }
+.input {
+  width: 100%; min-height: 32px; padding: 4px 8px; font: inherit; font-size: 13px;
+  color: var(--color-text); background: var(--color-surface);
+  border: 1px solid var(--color-divider); border-radius: 0;
+}
+.input:focus-visible { border-color: var(--color-accent); outline: none; }
+
+.tag { display: inline-flex; align-items: center; font-size: 10px; padding: 2px 6px; border-radius: 0; }
+.tag-outline { border: 1px solid var(--color-accent); color: var(--color-accent); }
+
+.mono { font-family: var(--font-mono); font-size: 10.5px; color: color-mix(in srgb, var(--color-text) 55%, transparent); }
+.kicker { font-size: 9.5px; letter-spacing: 0.12em; text-transform: uppercase; color: color-mix(in srgb, var(--color-text) 50%, transparent); }
+
+/* Extension Nav & Views */
+.ext-head { display: flex; align-items: center; justify-content: space-between; padding-bottom: var(--space-3); border-bottom: 1px solid var(--color-divider); margin-bottom: var(--space-4); }
+.ext-title { font-family: var(--font-heading); font-weight: 600; font-size: 18px; line-height: 1.1; }
+
+.ext-nav { display: flex; gap: 2px; overflow-x: auto; border-bottom: 1px solid var(--color-divider); padding-bottom: var(--space-2); margin-bottom: var(--space-4); }
+.nav-tab {
+  all: unset; cursor: pointer; padding: 4px 8px; font-family: var(--font-heading); font-weight: 600; font-size: 12.5px;
+  border-bottom: 2px solid transparent; color: color-mix(in srgb, var(--color-text) 60%, transparent); white-space: nowrap;
+}
+.nav-tab[aria-current="true"] { border-bottom-color: var(--color-accent); color: var(--color-accent-800); background: color-mix(in srgb, var(--color-accent) 12%, transparent); }
+
+.view { display: none; }
+.view.on { display: block; }
+
+.output-box { min-height: 160px; max-height: 260px; overflow-y: auto; padding: var(--space-3); background: var(--color-surface); }
+.md table { width: 100%; border-collapse: collapse; font-size: 12px; margin: 8px 0; }
+.md table th { text-align: left; font-size: 10px; text-transform: uppercase; padding: 4px; border-bottom: 1px solid var(--color-divider); }
+.md table td { padding: 4px; border-bottom: 1px solid color-mix(in srgb, var(--color-text) 8%, transparent); }
+pre.bib-box { margin: 0; font-family: var(--font-mono); font-size: 11px; line-height: 1.6; color: var(--color-accent-800); background: var(--color-accent-100); padding: 8px; overflow-x: auto; }
+</style>
 </head>
 <body>
-  <header>
-    <h1>🔬 Academic Research Agent</h1>
-    <span class="badge" id="apiStatus">API Online</span>
-  </header>
 
-  <div class="card">
-    <div class="form-group">
-      <label>Active Tab / Selected Context</label>
-      <input type="text" id="pageTitle" readonly placeholder="Detecting page title..." style="font-size: 0.78rem; opacity: 0.8;">
+<div class="ext-head">
+  <div>
+    <div class="kicker">Chrome Extension · v1.0.0</div>
+    <div class="ext-title">Academic Research Agent</div>
+  </div>
+  <span class="tag tag-outline" id="apiStatus">Checking API…</span>
+</div>
+
+<!-- TOP SPECIFICATION FORM -->
+<div class="blueprint" style="padding: var(--space-3); margin-bottom: var(--space-4);">
+  <i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i>
+  
+  <div class="field" style="margin-bottom: var(--space-2);">
+    <label for="pageTitle">Active Tab Context</label>
+    <input id="pageTitle" class="input mono" type="text" readonly placeholder="Detecting page context…">
+  </div>
+
+  <div class="field" style="margin-bottom: var(--space-2);">
+    <label for="topicInput">Research topic / query</label>
+    <input id="topicInput" class="input" type="text" placeholder="Enter query or parse context…">
+  </div>
+
+  <div style="display: grid; grid-template-columns: 1fr 1fr; gap: var(--space-2); margin-bottom: var(--space-3);">
+    <div class="field">
+      <label for="regionInput">Target region</label>
+      <select id="regionInput" class="input">
+        <option value="Japan">Japan — Imperial</option>
+        <option value="USA">USA / North America</option>
+        <option value="Europe">Europe</option>
+      </select>
     </div>
-
-    <div class="form-group">
-      <label>Research Topic / Query</label>
-      <input type="text" id="topicInput" placeholder="Enter topic or auto-parse selection...">
-    </div>
-
-    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.8rem; margin-bottom: 0.8rem;">
-      <div class="form-group" style="margin-bottom:0;">
-        <label>Target Region</label>
-        <select id="regionInput">
-          <option value="Japan">Japan (Imperial)</option>
-          <option value="USA">USA / Canada</option>
-          <option value="Europe">Europe</option>
-        </select>
-      </div>
-      <div class="form-group" style="margin-bottom:0;">
-        <label>Max Papers</label>
-        <input type="number" id="maxPapers" value="2" min="1" max="10">
-      </div>
-    </div>
-
-    <div class="btn-grid">
-      <button class="btn-action" id="parseBtn">🚀 Synthesize Query</button>
-      <button class="btn-secondary" id="saveNoteBtn">📝 Quick Tab Note</button>
+    <div class="field">
+      <label for="maxPapers">Max papers</label>
+      <input id="maxPapers" class="input" type="number" min="1" max="10" value="2">
     </div>
   </div>
 
-  <div class="card" style="margin-bottom: 0;">
-    <div class="tabs">
-      <div class="tab active" data-tab="summary">Summary</div>
-      <div class="tab" data-tab="matrix">Matrix</div>
-      <div class="tab" data-tab="bibtex">BibTeX</div>
-      <div class="tab" data-tab="pdf">IEEE PDF</div>
-    </div>
+  <div style="display: grid; grid-template-columns: 1.2fr 1fr; gap: var(--space-2);">
+    <button type="button" class="btn btn-primary blueprint" id="parseBtn">
+      <i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i>
+      Launch Pipeline
+    </button>
+    <button type="button" class="btn btn-secondary" id="saveNoteBtn">Quick Tab Note</button>
+  </div>
+</div>
 
-    <div id="outputContainer" class="output-container">
-      <p style="color: var(--text-muted);">Ready. Click 'Synthesize Query' or 'Quick Tab Note' to extract academic insights.</p>
+<!-- NAV TABS MATCHING MAIN CONSOLE -->
+<nav class="ext-nav" id="extNav">
+  <button type="button" class="nav-tab" data-go="summary" aria-current="true">02 Summary</button>
+  <button type="button" class="nav-tab" data-go="matrix">03 Matrix</button>
+  <button type="button" class="nav-tab" data-go="faculty">04 Faculty</button>
+  <button type="button" class="nav-tab" data-go="papers">05 Papers</button>
+  <button type="button" class="nav-tab" data-go="bibtex">06 BibTeX</button>
+  <button type="button" class="nav-tab" data-go="pdf">07 IEEE Draft</button>
+</nav>
+
+<!-- VIEWS -->
+<div class="view on" data-view="summary">
+  <div class="blueprint output-box md" id="summaryOut">
+    <p class="mono" style="margin:0;">Ready. Click 'Launch Pipeline' or 'Quick Tab Note' to extract academic insights.</p>
+  </div>
+</div>
+
+<div class="view" data-view="matrix">
+  <div class="blueprint output-box md" id="matrixOut">
+    <p class="mono" style="margin:0;">No literature matrix generated yet.</p>
+  </div>
+</div>
+
+<div class="view" data-view="faculty">
+  <div class="blueprint output-box" id="facultyOut" style="display:flex;flex-direction:column;gap:8px;">
+    <p class="mono" style="margin:0;">No faculty profiles matched yet.</p>
+  </div>
+</div>
+
+<div class="view" data-view="papers">
+  <div class="blueprint output-box" id="papersOut" style="display:flex;flex-direction:column;gap:8px;">
+    <p class="mono" style="margin:0;">No papers parsed yet.</p>
+  </div>
+</div>
+
+<div class="view" data-view="bibtex">
+  <div style="display:flex;flex-direction:column;gap:6px;">
+    <button type="button" class="btn btn-secondary" id="copyBib" style="width:auto;align-self:flex-start;">Copy references.bib</button>
+    <div class="blueprint">
+      <i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i>
+      <pre class="bib-box" id="bibOut">% no citations generated yet</pre>
     </div>
   </div>
+</div>
 
-  <script src="popup.js"></script>
+<div class="view" data-view="pdf">
+  <div class="blueprint output-box" id="pdfOut">
+    <p class="mono" style="margin:0;">No compiled draft yet.</p>
+  </div>
+</div>
+
+<script src="popup.js"></script>
 </body>
 </html>
