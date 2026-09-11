@@ -115,28 +115,13 @@ pre.bib-box { margin: 0; font-family: var(--font-mono); font-size: 10.5px; line-
     <input id="topicInput" class="input" type="text" placeholder="Auto-parsed selection or topic…">
   </div>
 
-  <div style="display: grid; grid-template-columns: 1fr 1fr; gap: var(--space-2); margin-bottom: var(--space-3);">
-    <div class="field">
-      <label for="regionInput">Target region</label>
-      <select id="regionInput" class="input">
-        <option value="Japan">Japan — Imperial</option>
-        <option value="USA">USA / North America</option>
-        <option value="Europe">Europe</option>
-      </select>
-    </div>
-    <div class="field">
-      <label for="maxPapers">Max papers</label>
-      <input id="maxPapers" class="input" type="number" min="1" max="10" value="2">
-    </div>
-  </div>
-
-  <div style="display: grid; grid-template-columns: 1.2fr 1fr; gap: var(--space-2);">
+  <div style="margin-bottom: var(--space-3);">
     <button type="button" class="btn btn-primary blueprint" id="parseBtn">
       <i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i>
-      Summarize Page
+      Parse & Summarize Active Tab
     </button>
-    <button type="button" class="btn btn-secondary" id="saveNoteBtn">Save Tab Note</button>
   </div>
+  <button type="button" class="btn btn-secondary" id="saveNoteBtn">Save Page to Research Notes</button>
 </div>
 
 <!-- NUMBERED VIEWS & TABS MATCHING MAIN CONSOLE -->

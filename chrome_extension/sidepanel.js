@@ -79,8 +79,6 @@ function extractActiveTabInfo() {
 
 async function runResearch() {
   const topic = document.getElementById("topicInput").value.trim();
-  const region = document.getElementById("regionInput").value;
-  const maxPapers = parseInt(document.getElementById("maxPapers").value, 10) || 2;
   const parseBtn = document.getElementById("parseBtn");
 
   if (!topic) {
@@ -89,7 +87,7 @@ async function runResearch() {
   }
 
   parseBtn.disabled = true;
-  parseBtn.innerText = "Running…";
+  parseBtn.innerText = "Parsing…";
   setAllOutputsLoading();
 
   try {
@@ -98,8 +96,8 @@ async function runResearch() {
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
         topic: topic,
-        target_region: region,
-        max_papers: maxPapers,
+        target_region: "Japan",
+        max_papers: 2,
         generate_ieee_pdf: true
       })
     });
@@ -115,7 +113,7 @@ async function runResearch() {
     showError("Could not connect to local agent server at http://127.0.0.1:8000");
   } finally {
     parseBtn.disabled = false;
-    parseBtn.innerText = "Summarize Page";
+    parseBtn.innerText = "Parse & Summarize Active Tab";
   }
 }
 
