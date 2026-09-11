@@ -2,8 +2,10 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <title>AI Academic Research Assistant</title>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Academic Research Agent — Extension</title>
+  <link href="https://fonts.googleapis.com/css2?family=Barlow:wght@400;500;600&family=Barlow+Condensed:wght@500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <script src="marked.min.js"></script>
   <style>
     :root {
       --bg-dark: #0b0f19;
@@ -14,40 +16,59 @@
       --text-main: #f8fafc;
       --text-muted: #94a3b8;
       --border-color: #334155;
+      --font-heading: 'Barlow Condensed', sans-serif;
+      --font-mono: 'IBM Plex Mono', monospace;
     }
 
     * { box-sizing: border-box; margin: 0; padding: 0; }
     body {
-      font-family: 'Inter', sans-serif;
+      font-family: 'Barlow', sans-serif;
       background: var(--bg-dark);
       color: var(--text-main);
-      width: 380px;
-      padding: 1.25rem;
+      width: 420px;
+      padding: 1.2rem;
     }
 
     header {
       display: flex;
       justify-content: space-between;
       align-items: center;
-      margin-bottom: 1.2rem;
+      margin-bottom: 1rem;
       border-bottom: 1px solid var(--border-color);
       padding-bottom: 0.75rem;
     }
-    header h1 { font-size: 1.05rem; font-weight: 700; background: linear-gradient(135deg, var(--accent-blue), var(--accent-indigo)); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
-    .status-dot { width: 8px; height: 8px; border-radius: 50%; background: #ef4444; }
-    .status-dot.online { background: #22c55e; box-shadow: 0 0 8px #22c55e; }
+    header h1 {
+      font-family: var(--font-heading);
+      font-size: 1.2rem;
+      font-weight: 700;
+      letter-spacing: -0.01em;
+      background: linear-gradient(135deg, var(--accent-blue), var(--accent-indigo));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+    .badge {
+      background: rgba(56, 189, 248, 0.15);
+      color: var(--accent-blue);
+      border: 1px solid var(--accent-blue);
+      padding: 0.25rem 0.6rem;
+      border-radius: 999px;
+      font-size: 0.7rem;
+      font-weight: 600;
+      font-family: var(--font-mono);
+    }
 
     .card {
       background: var(--panel-bg);
       border: 1px solid var(--border-color);
       border-radius: 10px;
-      padding: 1rem;
+      padding: 1.1rem;
       margin-bottom: 1rem;
+      box-shadow: 0 8px 24px rgba(0, 0, 0, 0.3);
     }
 
-    .form-group { margin-bottom: 1rem; }
-    label { display: block; font-size: 0.8rem; font-weight: 600; color: var(--text-muted); margin-bottom: 0.4rem; }
-    input[type="text"], textarea {
+    .form-group { margin-bottom: 0.9rem; }
+    label { display: block; font-size: 0.78rem; font-weight: 600; color: var(--text-muted); margin-bottom: 0.35rem; }
+    input[type="text"], select, input[type="number"] {
       width: 100%;
       background: var(--card-bg);
       border: 1px solid var(--border-color);
@@ -57,72 +78,97 @@
       font-size: 0.85rem;
       outline: none;
     }
+    input:focus, select:focus { border-color: var(--accent-blue); }
 
+    .btn-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 0.6rem; margin-top: 0.5rem; }
     .btn-action {
-      width: 100%;
       background: linear-gradient(135deg, var(--accent-blue), var(--accent-indigo));
       color: #0b0f19;
       font-weight: 700;
-      padding: 0.75rem;
+      padding: 0.7rem;
       border: none;
       border-radius: 6px;
       cursor: pointer;
-      font-size: 0.9rem;
-      margin-bottom: 0.5rem;
+      font-size: 0.85rem;
     }
-
     .btn-secondary {
-      width: 100%;
       background: var(--card-bg);
       color: var(--text-main);
       border: 1px solid var(--border-color);
       font-weight: 600;
-      padding: 0.6rem;
+      padding: 0.7rem;
       border-radius: 6px;
       cursor: pointer;
       font-size: 0.85rem;
     }
 
-    .output-box {
+    .tabs { display: flex; gap: 0.4rem; border-bottom: 1px solid var(--border-color); padding-bottom: 0.5rem; margin-bottom: 0.8rem; }
+    .tab { padding: 0.4rem 0.7rem; cursor: pointer; border-radius: 4px; font-size: 0.78rem; font-weight: 600; color: var(--text-muted); }
+    .tab.active { background: var(--card-bg); color: var(--accent-blue); border: 1px solid var(--border-color); }
+
+    .output-container {
       background: #070a12;
       border: 1px solid var(--border-color);
       border-radius: 6px;
-      padding: 0.8rem;
-      font-size: 0.8rem;
-      max-height: 180px;
+      padding: 0.9rem;
+      font-size: 0.82rem;
+      max-height: 200px;
       overflow-y: auto;
-      color: var(--accent-blue);
-      white-space: pre-wrap;
+      color: #e2e8f0;
+      line-height: 1.5;
     }
+    pre.code-block { font-family: var(--font-mono); font-size: 0.75rem; color: var(--accent-blue); white-space: pre-wrap; word-break: break-all; }
   </style>
 </head>
 <body>
   <header>
-    <h1>🔬 Research Assistant</h1>
-    <div style="display:flex; align-items:center; gap:6px;">
-      <span id="apiDot" class="status-dot"></span>
-      <span id="apiLabel" style="font-size:0.75rem; color:var(--text-muted)">API Offline</span>
-    </div>
+    <h1>🔬 Academic Research Agent</h1>
+    <span class="badge" id="apiStatus">API Online</span>
   </header>
 
   <div class="card">
     <div class="form-group">
-      <label>Active Page / Selection</label>
-      <input type="text" id="pageTitle" readonly style="font-size:0.78rem; opacity:0.8;">
+      <label>Active Tab / Selected Context</label>
+      <input type="text" id="pageTitle" readonly placeholder="Detecting page title..." style="font-size: 0.78rem; opacity: 0.8;">
     </div>
 
     <div class="form-group">
       <label>Research Topic / Query</label>
-      <input type="text" id="queryInput" placeholder="Enter query or auto-parse page...">
+      <input type="text" id="topicInput" placeholder="Enter topic or auto-parse selection...">
     </div>
 
-    <button class="btn-action" id="parseBtn">⚡ Synthesize & Add to Notes</button>
-    <button class="btn-secondary" id="saveNoteBtn">📝 Quick Note Active Tab</button>
+    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.8rem; margin-bottom: 0.8rem;">
+      <div class="form-group" style="margin-bottom:0;">
+        <label>Target Region</label>
+        <select id="regionInput">
+          <option value="Japan">Japan (Imperial)</option>
+          <option value="USA">USA / Canada</option>
+          <option value="Europe">Europe</option>
+        </select>
+      </div>
+      <div class="form-group" style="margin-bottom:0;">
+        <label>Max Papers</label>
+        <input type="number" id="maxPapers" value="2" min="1" max="10">
+      </div>
+    </div>
+
+    <div class="btn-grid">
+      <button class="btn-action" id="parseBtn">🚀 Synthesize Query</button>
+      <button class="btn-secondary" id="saveNoteBtn">📝 Quick Tab Note</button>
+    </div>
   </div>
 
-  <div class="card" style="margin-bottom:0;">
-    <label>Agent Output / Notes</label>
-    <div class="output-box" id="outputBox">Ready. Open any paper/webpage tab and click 'Synthesize' to extract insights.</div>
+  <div class="card" style="margin-bottom: 0;">
+    <div class="tabs">
+      <div class="tab active" data-tab="summary">Summary</div>
+      <div class="tab" data-tab="matrix">Matrix</div>
+      <div class="tab" data-tab="bibtex">BibTeX</div>
+      <div class="tab" data-tab="pdf">IEEE PDF</div>
+    </div>
+
+    <div id="outputContainer" class="output-container">
+      <p style="color: var(--text-muted);">Ready. Click 'Synthesize Query' or 'Quick Tab Note' to extract academic insights.</p>
+    </div>
   </div>
 
   <script src="popup.js"></script>
