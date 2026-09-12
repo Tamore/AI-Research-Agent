@@ -1,8 +1,8 @@
 {
   "manifest_version": 3,
-  "name": "AI Academic Research Assistant",
+  "name": "CiteX AI — Academic Research Assistant",
   "version": "1.0.0",
-  "description": "Live right-side panel assistant to parse, summarize, extract BibTeX, and log academic insights from any Chrome tab.",
+  "description": "Live right-side panel assistant to parse, summarize, extract BibTeX, and log academic insights from any Chrome tab or PDF.",
   "permissions": [
     "sidePanel",
     "activeTab",
@@ -17,8 +17,18 @@
   "side_panel": {
     "default_path": "sidepanel.html"
   },
+  "icons": {
+    "16": "icons/icon16.png",
+    "48": "icons/icon48.png",
+    "128": "icons/icon128.png"
+  },
   "action": {
-    "default_title": "Open Research Side Panel"
+    "default_title": "Open CiteX Side Panel",
+    "default_icon": {
+      "16": "icons/icon16.png",
+      "48": "icons/icon48.png",
+      "128": "icons/icon128.png"
+    }
   },
   "background": {
     "service_worker": "background.js"
