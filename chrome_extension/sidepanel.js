@@ -9,11 +9,6 @@ document.addEventListener("DOMContentLoaded", async () => {
   checkApiHealth();
   extractActiveTabInfo();
 
-  // Re-extract info when user switches active Chrome tabs
-  chrome.tabs.onActivated.addListener(() => {
-    extractActiveTabInfo();
-  });
-
   document.getElementById("parseBtn").addEventListener("click", runResearch);
   document.getElementById("saveNoteBtn").addEventListener("click", saveQuickNote);
   document.getElementById("copyBib").addEventListener("click", copyBibTeX);
