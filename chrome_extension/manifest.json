@@ -1,6 +1,6 @@
 {
   "manifest_version": 3,
-  "name": "CiteX AI — Academic Research Assistant",
+  "name": "CiteX — Autonomous Research & Citation Agent",
   "version": "1.0.0",
   "description": "Live right-side panel assistant to parse, summarize, extract BibTeX, and log academic insights from any Chrome tab or PDF.",
   "permissions": [
