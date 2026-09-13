@@ -38,6 +38,10 @@ faculty_radar = FacultyRadar()
 synthesizer = SynthesizerAgent(ollama_client=ollama)
 logger_agent = LoggerAgent()
 
+@app.get("/favicon.ico")
+def get_favicon():
+    return FileResponse("citex.ico", media_type="image/x-icon")
+
 @app.get("/", response_class=HTMLResponse)
 def read_root():
     try:
