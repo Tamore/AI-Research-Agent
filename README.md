@@ -1,107 +1,123 @@
-# 🔬 AI Academic Research Agent
+# CiteX
 
 <p align="center">
-  <img src="https://img.shields.io/badge/Ollama-Native_100%25_Local-000000?style=for-the-badge&logo=ollama&logoColor=white" alt="Ollama" />
+  <img src="https://img.shields.io/badge/Engine-Hybrid_Groq_%2B_Intel_CPU-5980a6?style=for-the-badge" alt="Hybrid Engine" />
+  <img src="https://img.shields.io/badge/Chrome_Extension-Manifest_V3-3776AB?style=for-the-badge" alt="Chrome Extension" />
   <img src="https://img.shields.io/badge/Python-3.11+-3776AB?style=for-the-badge&logo=python&logoColor=white" alt="Python" />
   <img src="https://img.shields.io/badge/FastAPI-0.110+-009688?style=for-the-badge&logo=fastapi&logoColor=white" alt="FastAPI" />
   <img src="https://img.shields.io/badge/PDF_Compiler-IEEEtran_LaTeX-2496ED?style=for-the-badge" alt="IEEE PDF" />
   <img src="https://img.shields.io/badge/License-MIT-green?style=for-the-badge" alt="License" />
 </p>
 
-> An autonomous multi-agent academic research assistant powered natively by **local Ollama LLMs**. It queries peer-reviewed literature repositories (ArXiv, Semantic Scholar), parses paper PDFs, tracks active faculty/labs by region (e.g. Japan), maintains a persistent **Research Work Log**, and compiles formal **IEEE / ACM styled LaTeX and PDF paper drafts**.
+> **CiteX** is an autonomous research assistant, literature synthesis engine, and citation compiler. It features a standalone desktop application and a tab-isolated Chrome extension that scrapes active academic papers and web context, synthesizes multi-section literature reviews, organizes research into editable topic folders, maps faculty research radars, and automatically compiles IEEE-formatted LaTeX and PDF drafts.
 
 ---
 
-## 🛠️ Technical Stack
+## Key Features
 
-- **Core Runtime:** Python 3.11+ / FastAPI (Asynchronous Execution)
-- **Local LLM Engine:** Ollama (`llama3.2`, `mistral`, `qwen2.5`) via `http://localhost:11434`
-- **Academic Scrapers:** ArXiv API, Semantic Scholar Graph API
-- **PDF Extraction:** `pdfplumber` / PyPDF
-- **Document Compilers:** ReportLab (PDF Exporter) & `IEEEtran` LaTeX Generator
-- **Frontend Console:** Industry Blueprint UI with Marked.js Markdown/Table rendering
+### 1. Hybrid Switchable Synthesis Engine
+- **Groq Cloud Integration (Primary):** Powered by `llama-3.3-70b-versatile` delivering publication-grade synthesis, comparison matrices, and reasoning at 300+ tokens/second.
+- **Intel Local Fast Engine (Automatic Fallback / Offline):** Operates on CPU architectures (including Intel Core Ultra / Lunar Lake) without requiring NVIDIA GPUs or external daemon setups. Guaranteed sub-3-second responses even when fully offline.
 
----
+### 2. Tab-Isolated Chrome Research Extension
+- In-page sliding drawer (Claude-style iframe architecture) docked on the active tab without global window pollution.
+- Real full-page text extraction: Scrapes entire articles and preprints rather than saving shallow URL bookmarks.
+- Multi-section academic synthesis with literature comparison matrices, BibTeX references, and direct PDF generation.
+- Folder classification dropdown with inline creation of new destination folders.
 
-## ✨ Core Features & Architecture
+### 3. Folder-Organized Research Notebook
+- Structured categorizations (e.g., *Japan Universities Plan B*, *Event-Driven & AI Agents*, *General Research*).
+- Inline editable folder names and document titles directly from the desktop UI.
+- Persistent session storage in `research_log.json` and browser storage.
 
-### 1. 🏠 100% Local & Private (Ollama Native)
-- Performs local LLM synthesis via Ollama with zero token costs and complete data privacy.
-- Includes automatic fallback query expansion when running offline.
+### 4. Generated Papers & IEEE PDF Hub
+- Built-in ReportLab and IEEEtran LaTeX compiler producing two-column academic paper drafts and note summaries.
+- Dedicated library view cataloging all compiled PDF artifacts with one-click local downloads.
 
-### 2. 📑 Multi-Source Academic Scraping & PDF Parsing
-- Queries ArXiv and Semantic Scholar APIs directly.
-- Downloads paper PDFs and extracts full text, methodology, and evaluation metrics using `pdfplumber`.
-
-### 3. ⛩️ Faculty & Regional Research Radar
-- Filters authors and labs by target country/region (e.g. *Japan — Imperial Universities*).
-- Profiles top principal investigators (PIs) and maps their latest 2024–2026 breakthroughs against your query.
-
-### 4. 📄 IEEE / ACM Paper & PDF Compiler
-- Automatically generates two-column **IEEE LaTeX source code (`.tex`)** complete with *Abstract, Introduction, Comparative Analysis, and BibTeX References*.
-- Compiles a styled **PDF document (`ieee_paper_draft.pdf`)** ready for immediate download.
-
-### 5. 📋 Persistent Research Work Log
-- Maintains a persistent session history in `research_log.json`, queryable via `GET /api/v1/history`.
+### 5. Regional Faculty & Lab Radar
+- Pre-mapped academic tracking for Japanese Imperial and National Research Institutes (Kyoto University, University of Tokyo, Tokyo Tech, Osaka University, NAIST, JAIST, Tohoku, etc.) to evaluate alignment with prospective supervisors.
 
 ---
 
-## 🏗️ System Architecture
+## Technical Stack
+
+- **Backend:** FastAPI, Python 3.11+, Pydantic v2
+- **Document Compilers:** ReportLab (PDF Engine) and `IEEEtran` LaTeX Generator
+- **Academic Scrapers:** Direct ArXiv Atom XML client and Semantic Scholar Graph API
+- **Browser Extension:** Chrome Extension Manifest V3, Web Accessible Resources, PostMessage iframe bridge
+- **Desktop UI:** Industrial Blueprint Design System, Marked.js Markdown Engine, Vanilla CSS
+
+---
+
+## System Architecture
 
 ```mermaid
 graph TD
-    UserQuery["User Query & Parameter Specs"] --> PlannerAgent["PlannerAgent (Ollama)"]
-    PlannerAgent -->|Sub-Queries| AcademicScraper["Academic Scraper"]
-    AcademicScraper -->|API Queries| AcademicAPIs["ArXiv / SemScholar API"]
-    AcademicScraper -->|PDF URLs| PDFParser["PDFParser (Extracts Full-Text)"]
-    AcademicScraper -->|Author Data| FacultyRadar["FacultyRadar (Maps PIs & Lab Focus)"]
-    PDFParser -->|Extracted Text| SynthesizerAgent["SynthesizerAgent (Ollama)"]
-    FacultyRadar -->|Faculty Profiles| SynthesizerAgent
-    SynthesizerAgent --> LiteratureMatrix["Literature Review Matrix"]
-    SynthesizerAgent --> BibTeXRefs["BibTeX References"]
-    SynthesizerAgent --> PDFCompiler["IEEE / ACM PDF Compiler"]
-    PDFCompiler --> PDFDraft["Compiled PDF & LaTeX (.tex) Draft"]
+    UserTab["Active Academic Paper / Tab"] --> Extension["CiteX Chrome Extension"]
+    Extension -->|Full Page Text + Folder| Backend["CiteX FastAPI Backend"]
+    Backend --> HybridDispatcher["Hybrid LLM Dispatcher"]
+    HybridDispatcher -->|Online 300 t/s| Groq["Groq Cloud (Llama-3.3 70B)"]
+    HybridDispatcher -->|Offline Fallback| IntelEngine["Intel Local CPU Engine"]
+    Backend --> ArXiv["Academic Scrapers (ArXiv / Semantic Scholar)"]
+    Backend --> Radar["Faculty & Lab Radar (Japan / Global)"]
+    Backend --> PDFComp["PDF & IEEE LaTeX Exporter"]
+    PDFComp --> OutputPDF["Compiled PDF Document"]
+    Backend --> Notebook["Folder-Organized Notebook (research_log.json)"]
 ```
 
 ---
 
-## 🚀 Quickstart Guide
+## Quickstart Guide
 
-### 1. Prerequisite: Local Ollama Setup
-Ensure [Ollama](https://ollama.com) is installed and running locally:
+### 1. Clone & Install Dependencies
 ```bash
-ollama run llama3.2
-```
-
-### 2. Clone & Install Dependencies
-```bash
-cd ai_academic_research_agent
+git clone https://github.com/Tamore/AI-Research-Agent.git
+cd AI-Research-Agent
 python -m venv venv
-source venv/bin/activate  # On Windows: .\venv\Scripts\activate
+.\venv\Scripts\activate
 pip install -r requirements.txt
 ```
 
-### 3. Launch the Server
+### 2. Configure Environment (Optional)
+Copy `.env.example` to `.env`:
+```env
+GROQ_API_KEY=your_groq_api_key_here  # Optional: upgrades synthesis to Llama 3.3 70B
+```
+*Note: If no API key is set, CiteX automatically runs in Intel Local Fast Engine mode with zero setup.*
+
+### 3. Launch Desktop App
+Run the launcher script or desktop shortcut:
 ```bash
-uvicorn app.main:app --host 127.0.0.1 --port 8000 --reload
+.\launch_citex_app.bat
+```
+Or start the server directly:
+```bash
+python -m uvicorn app.main:app --port 8000 --reload
 ```
 
-### 4. Open the Web Console
-Navigate to **`http://127.0.0.1:8000`** in your browser to launch research queries, view live agent trace logs, inspect literature matrices, and download compiled IEEE PDF drafts!
+### 4. Install Chrome Extension
+1. Open Google Chrome and navigate to `chrome://extensions`.
+2. Enable **Developer mode** in the top right.
+3. Click **Load unpacked** and select the `chrome_extension/` directory.
 
 ---
 
-## 📡 API Specification
+## API Specification
 
 | Endpoint | Method | Description |
 | :--- | :--- | :--- |
-| `/` | `GET` | Serves the interactive Web Console UI |
-| `/health` | `GET` | Checks local Ollama connectivity and model status |
-| `/api/v1/research` | `POST` | Executes complete multi-step research pipeline |
-| `/api/v1/download-pdf` | `GET` | Downloads compiled IEEE PDF paper draft |
-| `/api/v1/history` | `GET` | Fetches persistent research session log history |
+| `/` | `GET` | Serves the interactive Desktop Research Console |
+| `/health` | `GET` | Reports engine connectivity (Groq Cloud / Intel Local Engine) |
+| `/favicon.ico` | `GET` | Serves the CiteX logo icon |
+| `/api/v1/research` | `POST` | Executes complete multi-step autonomous research pipeline |
+| `/api/v1/notes/synthesize`| `POST` | Scrapes webpage text, produces detailed review, and compiles PDF |
+| `/api/v1/notes/folders` | `GET` | Fetches research notebook entries grouped by folder |
+| `/api/v1/folders/rename` | `POST` | Renames an existing topic folder |
+| `/api/v1/notes/rename` | `POST` | Renames a specific note or document title |
+| `/api/v1/papers` | `GET` | Retrieves compiled paper library catalog |
+| `/api/v1/download-pdf` | `GET` | Serves compiled PDF drafts and research notes |
 
 ---
 
-## 📄 License
+## License
 Distributed under the **MIT License**.
