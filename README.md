@@ -13,6 +13,22 @@
 
 ---
 
+## 🌐 Flexible Usage Modes
+
+CiteX is modular and can be deployed according to your workflow:
+
+1. **🌐 Hosted Web Application:**
+   - Deploy the FastAPI backend to your cloud server (AWS, GCP, Railway, Render, Docker, or VPS).
+   - Access the full research dashboard, literature matrix, and IEEE paper compilers from any browser on any device.
+2. **💻 Local Standalone Desktop Application:**
+   - Run completely offline on your PC with full privacy and zero token costs using the included desktop launcher (`launch_citex_app.bat` or Desktop shortcut).
+   - Renders in a dedicated borderless application window powered by the local Intel CPU Fast Engine.
+3. **🧩 Tab-Isolated Chrome Research Extension:**
+   - Use as a lightweight in-page research assistant on Chrome, Brave, or Edge.
+   - Summarizes preprints and articles, captures full-page context, compiles notes to PDF, and categorizes research into topic folders directly from your active browsing tab.
+
+---
+
 ## Key Features
 
 ### 1. Hybrid Switchable Synthesis Engine
