@@ -21,11 +21,18 @@ document.addEventListener("DOMContentLoaded", async () => {
   const closeBtn = document.getElementById("closeSidebarBtn");
   if (closeBtn) {
     closeBtn.addEventListener("click", () => {
-      chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
-        if (tabs && tabs[0]) {
-          chrome.tabs.sendMessage(tabs[0].id, { action: "toggle_citex_sidebar" });
+      try {
+        // Send toggle message to parent page window directly to avoid context invalidation
+        window.parent.postMessage({ action: "toggle_citex_sidebar" }, "*");
+      } catch (err) {
+        if (chrome && chrome.tabs) {
+          chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
+            if (tabs && tabs[0]) {
+              chrome.tabs.sendMessage(tabs[0].id, { action: "toggle_citex_sidebar" });
+            }
+          });
         }
-      });
+      }
     });
   }
 
@@ -250,4 +257,13 @@ function md(src) {
 
 function esc(s) {
   return String(s == null ? "" : s).replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+}
+
+function showError(msg) {
+  const box = document.getElementById("summaryOut");
+  if (box) {
+    box.innerHTML = `<div style="padding: 10px; border-left: 2px solid #a6595b; background: rgba(166, 89, 91, 0.08); color: #a6595b; font-family: var(--font-mono); font-size: 11.5px;">
+      ⚠️ ${esc(msg)}
+    </div>`;
+  }
 }

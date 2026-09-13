@@ -1,6 +1,13 @@
 // Content Script: Tab-isolated Sliding Right Sidebar (Claude-style)
 let sidebarIframe = null;
 
+// Listen to postMessage from the injected sidebar iframe
+window.addEventListener("message", (event) => {
+  if (event.data && event.data.action === "toggle_citex_sidebar") {
+    toggleSidebar();
+  }
+});
+
 chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
   if (request.action === "extract_page_content") {
     const selection = window.getSelection() ? window.getSelection().toString() : "";
