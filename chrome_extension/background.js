@@ -1,11 +1,18 @@
-// Chrome Extension Background Service Worker
-// Tab-isolated side panel
+// Background Service Worker for Tab-Isolated In-Page Sidebar
+chrome.action.onClicked.addListener(async (tab) => {
+  if (!tab || !tab.id) return;
 
-chrome.sidePanel.setPanelBehavior({ openPanelOnActionClick: true }).catch(() => {});
-
-// Listen for tab switches and close/hide panel if not desired
-chrome.tabs.onActivated.addListener(async (activeInfo) => {
-  // Let the side panel update its page context seamlessly
+  try {
+    // Send toggle message to the active tab's content script
+    await chrome.tabs.sendMessage(tab.id, { action: "toggle_citex_sidebar" });
+  } catch (err) {
+    // If content script is not yet injected (e.g. freshly opened page), inject and toggle
+    await chrome.scripting.executeScript({
+      target: { tabId: tab.id },
+      files: ["content.js"]
+    });
+    chrome.tabs.sendMessage(tab.id, { action: "toggle_citex_sidebar" }).catch(() => {});
+  }
 });
 
-console.log("CiteX side panel service worker active.");
+console.log("CiteX tab-isolated in-page sidebar worker ready.");

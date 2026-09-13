@@ -2,9 +2,8 @@
   "manifest_version": 3,
   "name": "CiteX",
   "version": "1.0.0",
-  "description": "Live right-side panel assistant to parse, summarize, extract BibTeX, and log academic insights from any Chrome tab or PDF.",
+  "description": "Tab-isolated research assistant to parse, summarize, extract BibTeX, and log academic insights directly inside the current webpage.",
   "permissions": [
-    "sidePanel",
     "activeTab",
     "scripting",
     "storage"
@@ -14,9 +13,6 @@
     "http://localhost:8000/*",
     "https://*/*"
   ],
-  "side_panel": {
-    "default_path": "sidepanel.html"
-  },
   "icons": {
     "16": "icons/icon16.png",
     "48": "icons/icon48.png",
@@ -37,6 +33,17 @@
     {
       "matches": ["<all_urls>"],
       "js": ["content.js"]
+    }
+  ],
+  "web_accessible_resources": [
+    {
+      "resources": [
+        "sidepanel.html",
+        "sidepanel.js",
+        "marked.min.js",
+        "icons/*"
+      ],
+      "matches": ["<all_urls>"]
     }
   ]
 }

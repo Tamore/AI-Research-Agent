@@ -95,10 +95,13 @@ pre.bib-box { margin: 0; font-family: var(--font-mono); font-size: 10.5px; line-
 
 <div class="panel-head">
   <div>
-    <div class="kicker">Side Panel Assistant</div>
+    <div class="kicker">Research Assistant</div>
     <div class="panel-title">CiteX</div>
   </div>
-  <span class="tag tag-outline" id="apiStatus">Checking API…</span>
+  <div style="display:flex;align-items:center;gap:6px;">
+    <span class="tag tag-outline" id="apiStatus">Checking API…</span>
+    <button type="button" id="closeSidebarBtn" style="all:unset;cursor:pointer;font-size:16px;font-weight:bold;line-height:1;padding:2px 6px;color:var(--color-text);" title="Close Sidebar">✕</button>
+  </div>
 </div>
 
 <!-- AUTO-PARSED ACTIVE PAGE SPECIFICATIONS -->

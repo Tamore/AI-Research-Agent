@@ -18,6 +18,17 @@ document.addEventListener("DOMContentLoaded", async () => {
   document.getElementById("saveNoteBtn").addEventListener("click", saveQuickNote);
   document.getElementById("copyBib").addEventListener("click", copyBibTeX);
 
+  const closeBtn = document.getElementById("closeSidebarBtn");
+  if (closeBtn) {
+    closeBtn.addEventListener("click", () => {
+      chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
+        if (tabs && tabs[0]) {
+          chrome.tabs.sendMessage(tabs[0].id, { action: "toggle_citex_sidebar" });
+        }
+      });
+    });
+  }
+
   document.querySelectorAll("[data-go]").forEach(btn => {
     btn.addEventListener("click", (e) => {
       const viewKey = e.target.getAttribute("data-go");
