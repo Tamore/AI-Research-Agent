@@ -1,33 +1,24 @@
-// Background Service Worker for Tab-Specific Chrome Side Panel
-const activeTabsWithPanel = new Set();
+// Chrome Extension Background Service Worker
+// Enables side panel ONLY on the specific tab when clicked
 
-// Chrome's official method to open side panel on click without losing user gesture:
-chrome.sidePanel.setPanelBehavior({ openPanelOnActionClick: true }).catch(() => {});
-
-// Listen to tabs where user opens the panel
-chrome.tabs.onActivated.addListener(async (activeInfo) => {
-  // If the panel was opened for a specific set of tabs, disable on others
-  if (activeTabsWithPanel.size > 0 && !activeTabsWithPanel.has(activeInfo.tabId)) {
-    chrome.sidePanel.setOptions({
-      tabId: activeInfo.tabId,
-      enabled: false
-    }).catch(() => {});
-  }
+chrome.runtime.onInstalled.addListener(() => {
+  // Disable side panel globally by default
+  chrome.sidePanel.setPanelBehavior({ openPanelOnActionClick: false }).catch(() => {});
+  chrome.sidePanel.setOptions({ enabled: false }).catch(() => {});
 });
 
-chrome.tabs.onUpdated.addListener((tabId, changeInfo, tab) => {
-  if (changeInfo.status === "complete" && !activeTabsWithPanel.has(tabId)) {
-    // Keep side panel default closed on fresh new tabs unless clicked
-    chrome.sidePanel.setOptions({
-      tabId: tabId,
-      enabled: false
-    }).catch(() => {});
-  }
+chrome.action.onClicked.addListener(async (tab) => {
+  if (!tab || !tab.id) return;
+
+  // 1. Enable the side panel ONLY for this specific tab ID
+  await chrome.sidePanel.setOptions({
+    tabId: tab.id,
+    path: "sidepanel.html",
+    enabled: true
+  });
+
+  // 2. Open it for this tab ID
+  await chrome.sidePanel.open({ tabId: tab.id });
 });
 
-// Clean up closed tabs
-chrome.tabs.onRemoved.addListener((tabId) => {
-  activeTabsWithPanel.delete(tabId);
-});
-
-console.log("CiteX Side Panel (Tab-isolated) initialized.");
+console.log("CiteX tab-isolated side panel ready.");
