@@ -1,30 +1,25 @@
 // Background Service Worker for Tab-Specific Chrome Side Panel
 const activeTabsWithPanel = new Set();
 
-chrome.sidePanel.setPanelBehavior({ openPanelOnActionClick: false }).catch(() => {});
+// Chrome's official method to open side panel on click without losing user gesture:
+chrome.sidePanel.setPanelBehavior({ openPanelOnActionClick: true }).catch(() => {});
 
-chrome.action.onClicked.addListener(async (tab) => {
-  if (!tab || !tab.id) return;
-
-  activeTabsWithPanel.add(tab.id);
-
-  // Enable and open side panel exclusively for this tab
-  await chrome.sidePanel.setOptions({
-    tabId: tab.id,
-    path: "sidepanel.html",
-    enabled: true
-  });
-
-  chrome.sidePanel.open({ tabId: tab.id }).catch((err) => {
-    console.error("Failed to open side panel:", err);
-  });
-});
-
-// When user switches tabs, if the newly active tab was never activated for CiteX, disable it
+// Listen to tabs where user opens the panel
 chrome.tabs.onActivated.addListener(async (activeInfo) => {
-  if (!activeTabsWithPanel.has(activeInfo.tabId)) {
+  // If the panel was opened for a specific set of tabs, disable on others
+  if (activeTabsWithPanel.size > 0 && !activeTabsWithPanel.has(activeInfo.tabId)) {
     chrome.sidePanel.setOptions({
       tabId: activeInfo.tabId,
+      enabled: false
+    }).catch(() => {});
+  }
+});
+
+chrome.tabs.onUpdated.addListener((tabId, changeInfo, tab) => {
+  if (changeInfo.status === "complete" && !activeTabsWithPanel.has(tabId)) {
+    // Keep side panel default closed on fresh new tabs unless clicked
+    chrome.sidePanel.setOptions({
+      tabId: tabId,
       enabled: false
     }).catch(() => {});
   }
