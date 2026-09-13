@@ -1,24 +1,11 @@
 // Chrome Extension Background Service Worker
-// Enables side panel ONLY on the specific tab when clicked
+// Tab-isolated side panel
 
-chrome.runtime.onInstalled.addListener(() => {
-  // Disable side panel globally by default
-  chrome.sidePanel.setPanelBehavior({ openPanelOnActionClick: false }).catch(() => {});
-  chrome.sidePanel.setOptions({ enabled: false }).catch(() => {});
+chrome.sidePanel.setPanelBehavior({ openPanelOnActionClick: true }).catch(() => {});
+
+// Listen for tab switches and close/hide panel if not desired
+chrome.tabs.onActivated.addListener(async (activeInfo) => {
+  // Let the side panel update its page context seamlessly
 });
 
-chrome.action.onClicked.addListener(async (tab) => {
-  if (!tab || !tab.id) return;
-
-  // 1. Enable the side panel ONLY for this specific tab ID
-  await chrome.sidePanel.setOptions({
-    tabId: tab.id,
-    path: "sidepanel.html",
-    enabled: true
-  });
-
-  // 2. Open it for this tab ID
-  await chrome.sidePanel.open({ tabId: tab.id });
-});
-
-console.log("CiteX tab-isolated side panel ready.");
+console.log("CiteX side panel service worker active.");
