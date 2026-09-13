@@ -17,7 +17,7 @@ class SemanticScholarClient:
         }
         
         try:
-            async with httpx.AsyncClient(timeout=10.0) as client:
+            async with httpx.AsyncClient(timeout=1.5) as client:
                 res = await client.get(url, params=params)
                 if res.status_code == 200:
                     data = res.json()

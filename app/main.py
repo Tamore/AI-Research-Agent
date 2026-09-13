@@ -94,7 +94,8 @@ async def execute_research(query: ResearchQuery, background_tasks: BackgroundTas
                     all_papers.append(p)
                 if len(all_papers) >= query.max_papers:
                     break
-            if len(all_papers) >= query.max_papers:
+            if len(all_papers) >= 1:
+                # We have valid context papers, proceed immediately to analysis
                 break
                 
         papers_to_analyze = all_papers[:query.max_papers]

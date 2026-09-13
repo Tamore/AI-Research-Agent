@@ -17,7 +17,7 @@ class PaperMetadata(BaseModel):
     published_date: str
     arxiv_id: Optional[str] = None
     doi: Optional[str] = None
-    pdf_url: str
+    pdf_url: Optional[str] = ""
     abstract: str
     categories: List[str] = []
     extracted_text: Optional[str] = None

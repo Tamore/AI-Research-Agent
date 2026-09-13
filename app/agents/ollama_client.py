@@ -10,13 +10,12 @@ class OllamaClient:
         self.model = model or settings.OLLAMA_DEFAULT_MODEL
 
     async def check_health(self) -> bool:
-        """Check if local Ollama server is running."""
+        """Check if local Ollama server is running with ultra-fast check."""
         try:
-            async with httpx.AsyncClient(timeout=3.0) as client:
+            async with httpx.AsyncClient(timeout=0.4) as client:
                 res = await client.get(f"{self.base_url}/api/tags")
                 return res.status_code == 200
         except Exception as e:
-            logger.warning(f"Ollama health check failed: {e}")
             return False
 
     async def generate(self, prompt: str, system_prompt: str = None, model: str = None) -> str:
