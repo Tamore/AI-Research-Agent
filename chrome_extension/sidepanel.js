@@ -181,22 +181,37 @@ function saveQuickNote() {
       });
 
       try {
-        await fetch(`${API_BASE}/api/v1/notes`, {
+        const res = await fetch(`${API_BASE}/api/v1/notes/synthesize`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(noteItem)
+          body: JSON.stringify({
+            title: title,
+            url: url,
+            folder: selectedFolder,
+            selected_text: topic,
+            full_text: state.pageFullText || ""
+          })
         });
+        if (res.ok) {
+          const data = await res.json();
+          const pdfLink = data.pdf_download_url ? `\n\n[Download Compiled Note PDF](${API_BASE}${data.pdf_download_url})` : "";
+          document.getElementById("summaryOut").innerHTML = md(`${data.notes_markdown}${pdfLink}`);
+        } else {
+          showBasicSaved();
+        }
       } catch (e) {
-        // preserved in chrome.storage.local
+        showBasicSaved();
       }
 
-      const noteMarkdown = `## Saved Research Note\n- **Folder:** ${selectedFolder}\n- **Title:** ${title}\n- **URL:** [${url}](${url})\n${noteContent ? `\n> ${noteContent}\n` : ""}\n*Stored in persistent research notebook (research_log.json and local storage).*`;
-      document.getElementById("summaryOut").innerHTML = md(noteMarkdown);
+      function showBasicSaved() {
+        const noteMarkdown = `## Saved Research Note\n- **Folder:** ${selectedFolder}\n- **Title:** ${title}\n- **URL:** [${url}](${url})\n${noteContent ? `\n> ${noteContent}\n` : ""}\n*Saved into folder notebook.*`;
+        document.getElementById("summaryOut").innerHTML = md(noteMarkdown);
+      }
 
       if (noteBtn) {
         const originalText = noteBtn.innerText;
-        noteBtn.innerText = "Saved to Notebook";
-        setTimeout(() => { noteBtn.innerText = originalText; }, 1800);
+        noteBtn.innerText = "Saved & Compiled PDF";
+        setTimeout(() => { noteBtn.innerText = originalText; }, 2000);
       }
     }
   });

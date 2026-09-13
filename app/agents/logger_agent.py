@@ -60,20 +60,47 @@ class LoggerAgent:
             papers.insert(0, paper_entry)
             self._save_json(self.papers_filepath, papers)
 
-    def log_note(self, title: str, url: str, note_text: str = "", folder: str = "General Research"):
-        """Save a research note categorized by topic folder."""
+    def log_note(self, title: str, url: str, note_text: str = "", folder: str = "General Research", pdf_url: str = ""):
+        """Save a research note categorized by topic folder with compiled PDF reference."""
         logs = self._load_json(self.log_filepath)
+        note_id = f"note_{int(datetime.now().timestamp() * 1000)}"
         entry = {
+            "id": note_id,
             "type": "tab_note",
             "timestamp": datetime.now().isoformat(),
             "folder": folder or "General Research",
             "title": title,
             "url": url,
-            "note": note_text
+            "note": note_text,
+            "pdf_url": pdf_url
         }
         logs.append(entry)
         self._save_json(self.log_filepath, logs)
         return entry
+
+    def rename_folder(self, old_name: str, new_name: str) -> bool:
+        """Rename an existing research notes folder across all logged entries."""
+        if not old_name or not new_name:
+            return False
+        logs = self._load_json(self.log_filepath)
+        updated = False
+        for item in logs:
+            if item.get("type") == "tab_note" and item.get("folder") == old_name:
+                item["folder"] = new_name
+                updated = True
+        if updated:
+            self._save_json(self.log_filepath, logs)
+        return True
+
+    def update_note(self, note_id: str, new_title: str) -> bool:
+        """Rename a specific note or document title."""
+        logs = self._load_json(self.log_filepath)
+        for item in logs:
+            if item.get("id") == note_id or (item.get("title") == note_id and item.get("type") == "tab_note"):
+                item["title"] = new_title
+                self._save_json(self.log_filepath, logs)
+                return True
+        return False
 
     def get_notes_by_folder(self) -> Dict[str, List[Dict[str, Any]]]:
         """Group all saved research notes by folder."""
@@ -97,3 +124,4 @@ class LoggerAgent:
 
     def get_history(self) -> List[Dict[str, Any]]:
         return self._load_json(self.log_filepath)
+

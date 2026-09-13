@@ -175,3 +175,91 @@ class PDFExporter:
         except Exception as e:
             logger.error(f"Error compiling PDF with ReportLab: {e}")
             raise e
+
+    @staticmethod
+    def compile_note_pdf(title: str, url: str, folder: str, content_markdown: str, output_filepath: str) -> str:
+        """Compile an academic research note from a parsed page into a publication-quality PDF."""
+        try:
+            doc = SimpleDocTemplate(
+                output_filepath,
+                pagesize=letter,
+                rightMargin=40,
+                leftMargin=40,
+                topMargin=40,
+                bottomMargin=40
+            )
+
+            styles = getSampleStyleSheet()
+            PRIMARY_COLOR = colors.HexColor("#0f172a")
+            SECONDARY_COLOR = colors.HexColor("#2563eb")
+            NEUTRAL_DARK = colors.HexColor("#334155")
+            BG_LIGHT = colors.HexColor("#f8fafc")
+            BORDER_COLOR = colors.HexColor("#e2e8f0")
+
+            title_style = ParagraphStyle(
+                'NoteTitle',
+                parent=styles['Heading1'],
+                fontName='Helvetica-Bold',
+                fontSize=18,
+                leading=22,
+                textColor=PRIMARY_COLOR,
+                spaceAfter=6
+            )
+            meta_style = ParagraphStyle(
+                'NoteMeta',
+                parent=styles['Normal'],
+                fontName='Helvetica',
+                fontSize=9.5,
+                leading=14,
+                textColor=SECONDARY_COLOR,
+                spaceAfter=12
+            )
+            h2_style = ParagraphStyle(
+                'NoteH2',
+                parent=styles['Heading2'],
+                fontName='Helvetica-Bold',
+                fontSize=12,
+                leading=16,
+                textColor=PRIMARY_COLOR,
+                spaceBefore=10,
+                spaceAfter=6
+            )
+            body_style = ParagraphStyle(
+                'NoteBody',
+                parent=styles['Normal'],
+                fontName='Helvetica',
+                fontSize=9.5,
+                leading=14,
+                textColor=NEUTRAL_DARK,
+                spaceAfter=8
+            )
+
+            elements = []
+            elements.append(Paragraph(title, title_style))
+            elements.append(Paragraph(f"Folder: {folder} | Source: {url}", meta_style))
+            elements.append(HRFlowable(width="100%", thickness=1, color=BORDER_COLOR, spaceAfter=12))
+
+            # Render markdown lines into paragraphs
+            for line in content_markdown.split("\n"):
+                line = line.strip()
+                if not line:
+                    continue
+                if line.startswith("## "):
+                    elements.append(Paragraph(line[3:], h2_style))
+                elif line.startswith("### "):
+                    elements.append(Paragraph(line[4:], h2_style))
+                elif line.startswith("- ") or line.startswith("* "):
+                    bullet = f"• {line[2:]}"
+                    elements.append(Paragraph(bullet, body_style))
+                elif line.startswith("> "):
+                    quote_text = f"<i>{line[2:]}</i>"
+                    elements.append(Paragraph(quote_text, body_style))
+                else:
+                    elements.append(Paragraph(line, body_style))
+
+            doc.build(elements)
+            return output_filepath
+        except Exception as e:
+            logger.error(f"Error compiling note PDF: {e}")
+            raise e
+

@@ -728,20 +728,66 @@ main { flex: 1; min-width: 0; display: flex; flex-direction: column; }
         var items = folders[k] || [];
         total += items.length;
         var cards = items.map(function (it) {
+          var pdfBtn = it.pdf_url
+            ? '<a href="' + esc(it.pdf_url) + '" target="_blank" class="btn btn-primary blueprint" style="font-size:11px;padding:3px 8px;margin-top:6px;width:auto;display:inline-flex;">' + corners + 'Download Note PDF</a>'
+            : '';
           return '<div class="blueprint card" style="padding:var(--space-3);margin-top:var(--space-2);">' + corners +
-            '<div class="card-kicker">' + esc(it.timestamp ? it.timestamp.slice(0, 10) : "") + '</div>' +
+            '<div style="display:flex;justify-content:space-between;align-items:center;">' +
+              '<div class="card-kicker">' + esc(it.timestamp ? it.timestamp.slice(0, 10) : "") + '</div>' +
+              '<button type="button" class="btn btn-secondary rename-note-btn" data-id="' + esc(it.id || it.title) + '" data-title="' + esc(it.title) + '" style="font-size:10px;padding:1px 5px;width:auto;">Rename Note</button>' +
+            '</div>' +
             '<div class="card-title" style="font-size:14px;"><a href="' + esc(it.url) + '" target="_blank">' + esc(it.title) + '</a></div>' +
-            (it.note ? '<div class="mono" style="font-size:11.5px;color:var(--color-accent-800);">' + esc(it.note) + '</div>' : "") +
+            (it.note ? '<div class="mono" style="font-size:11px;color:var(--color-accent-800);max-height:80px;overflow-y:auto;white-space:pre-wrap;">' + esc(it.note) + '</div>' : "") +
+            pdfBtn +
             '</div>';
         }).join("");
         return '<div class="blueprint" style="padding:var(--space-4);">' + corners +
           '<div style="display:flex;justify-content:space-between;align-items:center;border-bottom:1px solid var(--color-divider);padding-bottom:var(--space-2);">' +
-          '<h4 style="margin:0;font-size:16px;">📁 ' + esc(k) + '</h4><span class="tag tag-accent">' + items.length + ' notes</span></div>' +
+            '<div style="display:flex;align-items:center;gap:6px;">' +
+              '<h4 style="margin:0;font-size:16px;">' + esc(k) + '</h4>' +
+              '<button type="button" class="btn btn-secondary rename-folder-btn" data-folder="' + esc(k) + '" style="font-size:10px;padding:2px 6px;width:auto;">Edit Folder Name</button>' +
+            '</div>' +
+            '<span class="tag tag-accent">' + items.length + ' notes</span>' +
+          '</div>' +
           (cards || '<p class="empty" style="margin-top:var(--space-2);">No notes yet in this folder.</p>') +
           '</div>';
       }).join("");
       state.notesCount = total;
       $("notesContainer").innerHTML = html || '<p class="empty">No notes captured yet.</p>';
+
+      // Bind folder rename buttons
+      document.querySelectorAll(".rename-folder-btn").forEach(function (btn) {
+        btn.addEventListener("click", function (e) {
+          e.stopPropagation();
+          var oldName = btn.getAttribute("data-folder");
+          var newName = prompt("Rename folder:", oldName);
+          if (newName && newName.trim() && newName.trim() !== oldName) {
+            fetch("/api/v1/folders/rename", {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({ old_name: oldName, new_name: newName.trim() })
+            }).then(loadNotes);
+          }
+        });
+      });
+
+      // Bind note rename buttons
+      document.querySelectorAll(".rename-note-btn").forEach(function (btn) {
+        btn.addEventListener("click", function (e) {
+          e.stopPropagation();
+          var noteId = btn.getAttribute("data-id");
+          var oldTitle = btn.getAttribute("data-title");
+          var newTitle = prompt("Rename note title:", oldTitle);
+          if (newTitle && newTitle.trim() && newTitle.trim() !== oldTitle) {
+            fetch("/api/v1/notes/rename", {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({ note_id: noteId, new_title: newTitle.trim() })
+            }).then(loadNotes);
+          }
+        });
+      });
+
       renderNav();
     }).catch(function () {
       $("notesContainer").innerHTML = '<p class="empty">Unable to load research notes.</p>';
