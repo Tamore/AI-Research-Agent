@@ -1,28 +1,27 @@
 const API_BASE = "http://127.0.0.1:8000";
 
 let state = {
-  view: "summary",
-  report: null
+  activeTab: null
 };
 
 document.addEventListener("DOMContentLoaded", async () => {
   checkApiHealth();
   extractActiveTabInfo();
 
-  // Dynamically update the active tab's title & content whenever you switch tabs
   chrome.tabs.onActivated.addListener(() => {
     extractActiveTabInfo();
   });
 
-  document.getElementById("parseBtn").addEventListener("click", runResearch);
-  document.getElementById("saveNoteBtn").addEventListener("click", saveQuickNote);
-  document.getElementById("copyBib").addEventListener("click", copyBibTeX);
+  const parseBtn = document.getElementById("parseBtn");
+  if (parseBtn) parseBtn.addEventListener("click", runResearch);
+
+  const saveBtn = document.getElementById("saveNoteBtn");
+  if (saveBtn) saveBtn.addEventListener("click", saveQuickNote);
 
   const closeBtn = document.getElementById("closeSidebarBtn");
   if (closeBtn) {
     closeBtn.addEventListener("click", () => {
       try {
-        // Send toggle message to parent page window directly to avoid context invalidation
         window.parent.postMessage({ action: "toggle_citex_sidebar" }, "*");
       } catch (err) {
         if (chrome && chrome.tabs) {
@@ -35,24 +34,7 @@ document.addEventListener("DOMContentLoaded", async () => {
       }
     });
   }
-
-  document.querySelectorAll("[data-go]").forEach(btn => {
-    btn.addEventListener("click", (e) => {
-      const viewKey = e.target.getAttribute("data-go");
-      goView(viewKey);
-    });
-  });
 });
-
-function goView(viewKey) {
-  state.view = viewKey;
-  document.querySelectorAll(".nav-tab").forEach(tab => {
-    tab.setAttribute("aria-current", String(tab.getAttribute("data-go") === viewKey));
-  });
-  document.querySelectorAll(".view").forEach(v => {
-    v.classList.toggle("on", v.getAttribute("data-view") === viewKey);
-  });
-}
 
 async function checkApiHealth() {
   const badge = document.getElementById("apiStatus");
@@ -79,18 +61,22 @@ function extractActiveTabInfo() {
     if (!tabs || !tabs[0]) return;
 
     const currentTab = tabs[0];
-    titleInput.value = currentTab.title || currentTab.url || "Active Tab Context";
-    topicInput.value = currentTab.title || "";
+    state.activeTab = currentTab;
+    if (titleInput) titleInput.value = currentTab.title || currentTab.url || "Active Tab Context";
+    if (topicInput) topicInput.value = currentTab.title || "";
 
     try {
       chrome.tabs.sendMessage(currentTab.id, { action: "extract_page_content" }, (response) => {
         if (chrome.runtime.lastError) return;
-        if (response && response.selected_text) {
-          topicInput.value = response.selected_text;
+        if (response) {
+          if (response.selected_text && topicInput) {
+            topicInput.value = response.selected_text;
+          }
+          state.pageFullText = response.full_text || "";
         }
       });
     } catch (e) {
-      console.log("Side panel content script bridge fallback active.");
+      console.log("Active tab content extractor bridge ready.");
     }
   });
 }
@@ -98,6 +84,7 @@ function extractActiveTabInfo() {
 async function runResearch() {
   const topic = document.getElementById("topicInput").value.trim();
   const parseBtn = document.getElementById("parseBtn");
+  const box = document.getElementById("summaryOut");
 
   if (!topic) {
     document.getElementById("topicInput").focus();
@@ -105,8 +92,8 @@ async function runResearch() {
   }
 
   parseBtn.disabled = true;
-  parseBtn.innerText = "Parsing…";
-  setAllOutputsLoading();
+  parseBtn.innerText = "Synthesizing…";
+  box.innerHTML = '<p class="mono" style="color:var(--color-accent)">Parsing page context and synthesizing detailed literature review…</p>';
 
   try {
     const res = await fetch(`${API_BASE}/api/v1/research`, {
@@ -121,9 +108,8 @@ async function runResearch() {
     });
 
     if (res.ok) {
-      state.report = await res.json();
-      renderAllViews();
-      goView("summary");
+      const data = await res.json();
+      renderDetailedSynthesis(data);
     } else {
       showError("API error occurred while processing research request.");
     }
@@ -131,66 +117,26 @@ async function runResearch() {
     showError("Could not connect to local agent server at http://127.0.0.1:8000");
   } finally {
     parseBtn.disabled = false;
-    parseBtn.innerText = "Parse & Summarize Active Tab";
+    parseBtn.innerText = "Parse & Summarize Tab";
   }
 }
 
-function setAllOutputsLoading() {
-  const msg = '<p class="mono" style="color:var(--color-accent)">⚡ Parsing page context & synthesizing research report…</p>';
-  document.getElementById("summaryOut").innerHTML = msg;
-  document.getElementById("matrixOut").innerHTML = msg;
-  document.getElementById("facultyOut").innerHTML = msg;
-  document.getElementById("papersOut").innerHTML = msg;
-  document.getElementById("bibOut").textContent = "% compiling references…";
-  document.getElementById("pdfOut").innerHTML = msg;
-}
+function renderDetailedSynthesis(r) {
+  const box = document.getElementById("summaryOut");
+  if (!box || !r) return;
 
-function renderAllViews() {
-  const r = state.report;
-  if (!r) return;
+  let bibtexSection = "";
+  if (r.bibtex_citations) {
+    bibtexSection = `\n\n### BibTeX Citation\n\`\`\`bibtex\n${r.bibtex_citations}\n\`\`\``;
+  }
 
-  // 02 Summary
-  document.getElementById("summaryOut").innerHTML = md(r.summary_markdown) || '<p class="mono">Summary empty.</p>';
-
-  // 03 Matrix
-  document.getElementById("matrixOut").innerHTML = md(r.literature_matrix) || '<p class="mono">No matrix returned.</p>';
-
-  // 04 Faculty
-  const fac = r.faculty_radar || [];
-  document.getElementById("facultyOut").innerHTML = fac.length ? fac.map(f => {
-    const pct = Math.round((Number(f.alignment_score) || 0) * 100);
-    return `<div style="padding:6px; border-bottom:1px solid var(--color-divider);">
-      <div style="display:flex;justify-content:space-between;align-items:center;">
-        <b>${esc(f.name)}</b> <span class="tag tag-outline">${pct}%</span>
-      </div>
-      <div class="mono" style="font-size:11px;">${esc(f.university_or_lab)} · ${esc(f.country)}</div>
-      <div style="font-size:12px;margin-top:2px;">Latest: ${esc(f.latest_paper_title)}</div>
-    </div>`;
-  }).join("") : '<p class="mono">No faculty profiles matched.</p>';
-
-  // 05 Papers
-  const papers = r.analyzed_papers || [];
-  document.getElementById("papersOut").innerHTML = papers.length ? papers.map(p => {
-    return `<div style="padding:6px; border-bottom:1px solid var(--color-divider);">
-      <div style="font-weight:600;font-size:13px;">${esc(p.title)}</div>
-      <div class="mono" style="font-size:11px;">${esc(p.authors.join(", "))} (${p.year})</div>
-      <a href="${esc(p.pdf_url)}" target="_blank" class="mono" style="font-size:11px;">[View Source PDF]</a>
-    </div>`;
-  }).join("") : '<p class="mono">No papers parsed.</p>';
-
-  // 06 BibTeX
-  document.getElementById("bibOut").textContent = r.bibtex_citations || "% no citations generated";
-
-  // 07 IEEE PDF
+  let pdfLink = "";
   if (r.pdf_download_url) {
-    const pdfUrl = `${API_BASE}${r.pdf_download_url}`;
-    document.getElementById("pdfOut").innerHTML = `<div style="text-align:center; padding: 1rem;">
-      <h4 style="margin-bottom:8px;">IEEE Paper Draft Compiled</h4>
-      <a href="${pdfUrl}" target="_blank" class="btn btn-primary" style="text-decoration:none;display:inline-block;width:auto;">Download PDF</a>
-    </div>`;
-  } else {
-    document.getElementById("pdfOut").innerHTML = '<p class="mono">PDF compilation disabled.</p>';
+    pdfLink = `\n\n[Download Compiled IEEE Draft PDF](${API_BASE}${r.pdf_download_url})`;
   }
+
+  const fullMarkdown = `${r.summary_markdown || ""}\n\n### Literature Comparison Matrix\n${r.literature_matrix || ""}${bibtexSection}${pdfLink}`;
+  box.innerHTML = md(fullMarkdown);
 }
 
 function saveQuickNote() {
@@ -205,7 +151,7 @@ function saveQuickNote() {
       selectedFolder = custom.trim();
       const opt = document.createElement("option");
       opt.value = selectedFolder;
-      opt.textContent = "📁 " + selectedFolder;
+      opt.textContent = selectedFolder;
       opt.selected = true;
       folderSelect.insertBefore(opt, folderSelect.firstChild);
     } else {
@@ -220,7 +166,6 @@ function saveQuickNote() {
       const url = tabs[0].url || "";
       const noteContent = topic ? `Selection / Topic: ${topic}` : "";
 
-      // 1. Save to Chrome local storage (always works offline)
       const noteItem = {
         title: title,
         url: url,
@@ -235,7 +180,6 @@ function saveQuickNote() {
         chrome.storage.local.set({ citex_notes: notes });
       });
 
-      // 2. Persist to agent backend research_log.json if server is running
       try {
         await fetch(`${API_BASE}/api/v1/notes`, {
           method: "POST",
@@ -243,28 +187,18 @@ function saveQuickNote() {
           body: JSON.stringify(noteItem)
         });
       } catch (e) {
-        // Backend offline, storage still preserved in chrome.storage.local
+        // preserved in chrome.storage.local
       }
 
-      const noteMarkdown = `## 📝 Saved Research Note\n- **Folder:** \`${selectedFolder}\`\n- **Title:** ${title}\n- **URL:** [${url}](${url})\n${noteContent ? `\n> ${noteContent}\n` : ""}\n✅ *Stored in persistent research notebook (\`research_log.json\` & browser storage).*`;
+      const noteMarkdown = `## Saved Research Note\n- **Folder:** ${selectedFolder}\n- **Title:** ${title}\n- **URL:** [${url}](${url})\n${noteContent ? `\n> ${noteContent}\n` : ""}\n*Stored in persistent research notebook (research_log.json and local storage).*`;
       document.getElementById("summaryOut").innerHTML = md(noteMarkdown);
-      goView("summary");
 
       if (noteBtn) {
         const originalText = noteBtn.innerText;
-        noteBtn.innerText = "Saved to Notes!";
+        noteBtn.innerText = "Saved to Notebook";
         setTimeout(() => { noteBtn.innerText = originalText; }, 1800);
       }
     }
-  });
-}
-
-function copyBibTeX() {
-  const txt = document.getElementById("bibOut").textContent;
-  const btn = document.getElementById("copyBib");
-  navigator.clipboard.writeText(txt).then(() => {
-    btn.textContent = "Copied!";
-    setTimeout(() => { btn.textContent = "Copy references.bib"; }, 1600);
   });
 }
 
@@ -281,7 +215,8 @@ function showError(msg) {
   const box = document.getElementById("summaryOut");
   if (box) {
     box.innerHTML = `<div style="padding: 10px; border-left: 2px solid #a6595b; background: rgba(166, 89, 91, 0.08); color: #a6595b; font-family: var(--font-mono); font-size: 11.5px;">
-      ⚠️ ${esc(msg)}
+      [Warning] ${esc(msg)}
     </div>`;
   }
 }
+

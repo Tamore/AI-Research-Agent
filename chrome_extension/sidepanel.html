@@ -121,71 +121,30 @@ pre.bib-box { margin: 0; font-family: var(--font-mono); font-size: 10.5px; line-
   <div class="field" style="margin-bottom: var(--space-3);">
     <label for="folderSelect">Destination Research Folder</label>
     <select id="folderSelect" class="input mono" style="height:34px; cursor:pointer;">
-      <option value="Japan Universities Plan B">⛩️ Japan Universities Plan B</option>
-      <option value="Event-Driven & AI Agents">⚡ Event-Driven & AI Agents</option>
-      <option value="General Research">📁 General Research</option>
+      <option value="Japan Universities Plan B">Japan Universities Plan B</option>
+      <option value="Event-Driven & AI Agents">Event-Driven & AI Agents</option>
+      <option value="General Research">General Research</option>
       <option value="+new">+ New Folder…</option>
     </select>
   </div>
 
-  <div style="margin-bottom: var(--space-2);">
+  <div style="display:grid; grid-template-columns: 1fr 1fr; gap: var(--space-2); margin-bottom: var(--space-2);">
     <button type="button" class="btn btn-primary blueprint" id="parseBtn">
       <i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i>
-      ⚡ Parse & Summarize Tab
+      Parse & Summarize Tab
     </button>
-  </div>
-  <button type="button" class="btn btn-secondary" id="saveNoteBtn">📝 Save to Folder Notebook</button>
-</div>
-
-<!-- NUMBERED VIEWS & TABS MATCHING MAIN CONSOLE -->
-<nav class="panel-nav" id="panelNav">
-  <button type="button" class="nav-tab" data-go="summary" aria-current="true">02 Summary</button>
-  <button type="button" class="nav-tab" data-go="matrix">03 Matrix</button>
-  <button type="button" class="nav-tab" data-go="faculty">04 Faculty</button>
-  <button type="button" class="nav-tab" data-go="papers">05 Papers</button>
-  <button type="button" class="nav-tab" data-go="bibtex">06 BibTeX</button>
-  <button type="button" class="nav-tab" data-go="pdf">07 IEEE Draft</button>
-</nav>
-
-<!-- VIEWS -->
-<div class="view on" data-view="summary">
-  <div class="blueprint output-box md" id="summaryOut">
-    <p class="mono" style="margin:0;">Ready. Open any paper/website tab and click 'Summarize Page' or 'Save Tab Note'.</p>
+    <button type="button" class="btn btn-secondary" id="saveNoteBtn">Save to Folder Notebook</button>
   </div>
 </div>
 
-<div class="view" data-view="matrix">
-  <div class="blueprint output-box md" id="matrixOut">
-    <p class="mono" style="margin:0;">No literature matrix generated yet.</p>
-  </div>
+<!-- DETAILED NOTEBOOK & ACTIVE CONTEXT PANEL -->
+<div style="display:flex; justify-content:space-between; align-items:center; margin-bottom: 6px;">
+  <span class="kicker" style="font-size:10.5px;">Detailed Tab Synthesis & Research Note</span>
+  <span class="tag tag-outline" id="viewTag" style="font-size:10px;">Context Active</span>
 </div>
 
-<div class="view" data-view="faculty">
-  <div class="blueprint output-box" id="facultyOut" style="display:flex;flex-direction:column;gap:8px;">
-    <p class="mono" style="margin:0;">No faculty profiles matched yet.</p>
-  </div>
-</div>
-
-<div class="view" data-view="papers">
-  <div class="blueprint output-box" id="papersOut" style="display:flex;flex-direction:column;gap:8px;">
-    <p class="mono" style="margin:0;">No papers parsed yet.</p>
-  </div>
-</div>
-
-<div class="view" data-view="bibtex">
-  <div style="display:flex;flex-direction:column;gap:6px;">
-    <button type="button" class="btn btn-secondary" id="copyBib" style="width:auto;align-self:flex-start;">Copy references.bib</button>
-    <div class="blueprint">
-      <i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i>
-      <pre class="bib-box" id="bibOut">% no citations generated yet</pre>
-    </div>
-  </div>
-</div>
-
-<div class="view" data-view="pdf">
-  <div class="blueprint output-box" id="pdfOut">
-    <p class="mono" style="margin:0;">No compiled draft yet.</p>
-  </div>
+<div class="blueprint output-box md" id="summaryOut" style="min-height: 480px; max-height: calc(100vh - 270px); overflow-y: auto;">
+  <p class="mono" style="margin:0;">Ready. Open any academic paper or article and click 'Parse & Summarize Tab' or 'Save to Folder Notebook'.</p>
 </div>
 
 <script src="sidepanel.js"></script>
