@@ -41,5 +41,25 @@ class LoggerAgent:
         except Exception as e:
             logger.error(f"Failed to write session log: {e}")
 
+    def log_note(self, title: str, url: str, note_text: str = ""):
+        """Append an individual webpage / paper research note to persistent log."""
+        logs = self._load_log()
+        entry = {
+            "type": "tab_note",
+            "timestamp": datetime.now().isoformat(),
+            "title": title,
+            "url": url,
+            "note": note_text
+        }
+        logs.append(entry)
+        try:
+            with open(self.log_filepath, "w", encoding="utf-8") as f:
+                json.dump(logs, f, indent=2, ensure_ascii=False)
+            logger.info(f"Tab note logged successfully to {self.log_filepath}")
+            return entry
+        except Exception as e:
+            logger.error(f"Failed to write note: {e}")
+            return None
+
     def get_history(self) -> List[Dict[str, Any]]:
         return self._load_log()

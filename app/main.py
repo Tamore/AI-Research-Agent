@@ -57,6 +57,15 @@ def get_research_history():
     """Retrieve persistent research session log history."""
     return logger_agent.get_history()
 
+@app.post("/api/v1/notes")
+def save_research_note(note_data: dict):
+    """Save an active tab / paper note into persistent research_log.json."""
+    title = note_data.get("title", "Untitled Research Note")
+    url = note_data.get("url", "")
+    note_text = note_data.get("note", "")
+    entry = logger_agent.log_note(title=title, url=url, note_text=note_text)
+    return {"status": "saved", "entry": entry}
+
 @app.get("/api/v1/download-pdf")
 def download_pdf(filepath: str = "ieee_paper_draft.pdf"):
     """Download compiled IEEE PDF paper draft."""

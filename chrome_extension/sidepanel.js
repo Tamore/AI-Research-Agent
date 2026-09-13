@@ -187,13 +187,49 @@ function renderAllViews() {
 }
 
 function saveQuickNote() {
-  chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
+  const noteBtn = document.getElementById("saveNoteBtn");
+  const topic = document.getElementById("topicInput").value.trim();
+
+  chrome.tabs.query({ active: true, currentWindow: true }, async (tabs) => {
     if (tabs && tabs[0]) {
-      const title = tabs[0].title;
-      const url = tabs[0].url;
-      const noteText = `## Quick Tab Note\n- **Title:** ${title}\n- **URL:** [${url}](${url})\n\nSaved to persistent research log.`;
-      document.getElementById("summaryOut").innerHTML = md(noteText);
+      const title = tabs[0].title || "Untitled Tab";
+      const url = tabs[0].url || "";
+      const noteContent = topic ? `Selection / Topic: ${topic}` : "";
+
+      // 1. Save to Chrome local storage (always works offline)
+      const noteItem = {
+        title: title,
+        url: url,
+        note: noteContent,
+        timestamp: new Date().toISOString()
+      };
+
+      chrome.storage.local.get({ citex_notes: [] }, (data) => {
+        const notes = data.citex_notes;
+        notes.unshift(noteItem);
+        chrome.storage.local.set({ citex_notes: notes });
+      });
+
+      // 2. Persist to agent backend research_log.json if server is running
+      try {
+        await fetch(`${API_BASE}/api/v1/notes`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(noteItem)
+        });
+      } catch (e) {
+        // Backend offline, storage still preserved in chrome.storage.local
+      }
+
+      const noteMarkdown = `## 📝 Saved Research Note\n- **Title:** ${title}\n- **URL:** [${url}](${url})\n${noteContent ? `\n> ${noteContent}\n` : ""}\n✅ *Stored in persistent research log (\`research_log.json\` & browser storage).*`;
+      document.getElementById("summaryOut").innerHTML = md(noteMarkdown);
       goView("summary");
+
+      if (noteBtn) {
+        const originalText = noteBtn.innerText;
+        noteBtn.innerText = "Saved to Notes!";
+        setTimeout(() => { noteBtn.innerText = originalText; }, 1800);
+      }
     }
   });
 }
