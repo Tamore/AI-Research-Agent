@@ -368,6 +368,38 @@ main { flex: 1; min-width: 0; display: flex; flex-direction: column; }
         <div class="scroll-x" id="historyOut"><p class="empty">Loading work log…</p></div>
       </section>
 
+      <!-- 09 RESEARCH NOTES NOTEBOOK -->
+      <section class="view" data-view="notes">
+        <div style="display:flex;flex-direction:column;gap:var(--space-6);">
+          <div style="display:flex;justify-content:space-between;align-items:center;">
+            <div>
+              <h3 style="margin:0;">Folder-Organized Research Notebook</h3>
+              <p class="mono" style="font-size:12px;color:var(--color-accent);margin:0;">Tab snippets, papers & insights captured from CiteX Extension</p>
+            </div>
+            <button type="button" class="btn btn-secondary" id="refreshNotesBtn">Refresh Notes</button>
+          </div>
+          <div id="notesContainer" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(320px,1fr));gap:var(--space-6);">
+            <p class="empty">Loading research notebook…</p>
+          </div>
+        </div>
+      </section>
+
+      <!-- 10 GENERATED PAPERS & PDF HUB -->
+      <section class="view" data-view="papers_hub">
+        <div style="display:flex;flex-direction:column;gap:var(--space-6);">
+          <div style="display:flex;justify-content:space-between;align-items:center;">
+            <div>
+              <h3 style="margin:0;">Generated Papers & IEEE PDF Library</h3>
+              <p class="mono" style="font-size:12px;color:var(--color-accent);margin:0;">Autonomous literature reviews, drafts & compiled PDF artifacts</p>
+            </div>
+            <button type="button" class="btn btn-secondary" id="refreshPapersBtn">Refresh Library</button>
+          </div>
+          <div id="papersHubContainer" style="display:flex;flex-direction:column;gap:var(--space-4);">
+            <p class="empty">Loading generated papers…</p>
+          </div>
+        </div>
+      </section>
+
     </div>
   </main>
 </div>
@@ -378,13 +410,15 @@ main { flex: 1; min-width: 0; display: flex; flex-direction: column; }
 
   var VIEWS = [
     { key: "console", n: "01", label: "Console", kicker: "Pipeline console" },
-    { key: "summary", n: "02", label: "Summary", kicker: "Synthesized report" },
-    { key: "matrix",  n: "03", label: "Literature matrix", kicker: "Comparative matrix" },
-    { key: "faculty", n: "04", label: "Faculty radar", kicker: "Faculty radar · region scan" },
-    { key: "papers",  n: "05", label: "Analyzed papers", kicker: "Retrieved corpus" },
-    { key: "bibtex",  n: "06", label: "BibTeX", kicker: "Generated citations" },
-    { key: "pdf",     n: "07", label: "IEEE draft", kicker: "Compiled artifact" },
-    { key: "history", n: "08", label: "Run history", kicker: "Persistent work log" }
+    { key: "notes",   n: "02", label: "Research notes", kicker: "Folder-organized notebook" },
+    { key: "papers_hub", n: "03", label: "Generated papers", kicker: "Compiled IEEE PDF library" },
+    { key: "summary", n: "04", label: "Summary", kicker: "Synthesized report" },
+    { key: "matrix",  n: "05", label: "Literature matrix", kicker: "Comparative matrix" },
+    { key: "faculty", n: "06", label: "Faculty radar", kicker: "Faculty radar · region scan" },
+    { key: "papers",  n: "07", label: "Analyzed papers", kicker: "Retrieved corpus" },
+    { key: "bibtex",  n: "08", label: "BibTeX", kicker: "Generated citations" },
+    { key: "pdf",     n: "09", label: "IEEE draft", kicker: "Compiled artifact" },
+    { key: "history", n: "10", label: "Run history", kicker: "Persistent work log" }
   ];
 
   var STAGES = [
@@ -684,12 +718,58 @@ main { flex: 1; min-width: 0; display: flex; flex-direction: column; }
     });
   }
 
+  /* ── notes + papers + health ────────────────────────────────────────── */
+  function loadNotes() {
+    fetch("/api/v1/notes/folders").then(function (r) { return r.json(); }).then(function (folders) {
+      var keys = Object.keys(folders);
+      var total = 0;
+      var html = keys.map(function (k) {
+        var items = folders[k] || [];
+        total += items.length;
+        var cards = items.map(function (it) {
+          return '<div class="blueprint card" style="padding:var(--space-3);margin-top:var(--space-2);">' + corners +
+            '<div class="card-kicker">' + esc(it.timestamp ? it.timestamp.slice(0, 10) : "") + '</div>' +
+            '<div class="card-title" style="font-size:14px;"><a href="' + esc(it.url) + '" target="_blank">' + esc(it.title) + '</a></div>' +
+            (it.note ? '<div class="mono" style="font-size:11.5px;color:var(--color-accent-800);">' + esc(it.note) + '</div>' : "") +
+            '</div>';
+        }).join("");
+        return '<div class="blueprint" style="padding:var(--space-4);">' + corners +
+          '<div style="display:flex;justify-content:space-between;align-items:center;border-bottom:1px solid var(--color-divider);padding-bottom:var(--space-2);">' +
+          '<h4 style="margin:0;font-size:16px;">📁 ' + esc(k) + '</h4><span class="tag tag-accent">' + items.length + ' notes</span></div>' +
+          (cards || '<p class="empty" style="margin-top:var(--space-2);">No notes yet in this folder.</p>') +
+          '</div>';
+      }).join("");
+      state.notesCount = total;
+      $("notesContainer").innerHTML = html || '<p class="empty">No notes captured yet.</p>';
+      renderNav();
+    }).catch(function () {
+      $("notesContainer").innerHTML = '<p class="empty">Unable to load research notes.</p>';
+    });
+  }
+
+  function loadPapers() {
+    fetch("/api/v1/papers").then(function (r) { return r.json(); }).then(function (list) {
+      state.papersHubCount = (list || []).length;
+      $("papersHubContainer").innerHTML = (list && list.length) ? list.map(function (p) {
+        return '<div class="blueprint" style="padding:var(--space-4);display:flex;justify-content:space-between;align-items:center;gap:var(--space-4);">' + corners +
+          '<div><div class="card-kicker">' + esc(p.timestamp ? p.timestamp.slice(0, 10) : "") + ' · ' + esc(p.target_region || "Global") + '</div>' +
+          '<div style="font-family:var(--font-heading);font-weight:600;font-size:17px;margin:2px 0;">' + esc(p.title) + '</div>' +
+          '<div style="font-size:12.5px;color:color-mix(in srgb, var(--color-text) 70%, transparent);">' + esc(p.summary) + '</div></div>' +
+          '<a href="' + esc(p.download_url) + '" target="_blank" class="btn btn-primary blueprint" style="flex:0 0 auto;">' + corners + 'Download PDF</a></div>';
+      }).join("") : '<p class="empty">No generated papers stored yet. Run a pipeline from the Console with "generate_ieee_pdf" checked.</p>';
+      renderNav();
+    }).catch(function () {
+      $("papersHubContainer").innerHTML = '<p class="empty">Unable to load generated papers library.</p>';
+    });
+  }
+
   function loadHealth() {
     fetch("/health").then(function (r) { return r.json(); }).then(function (h) {
-      var up = !!h.ollama_connected;
-      $("healthDot").className = "dot " + (up ? "up" : "down");
-      $("healthLabel").textContent = up ? "Ollama connected" : "Ollama offline";
-      $("healthMeta").innerHTML = "<div>GET /health · 200</div><div>" + esc(h.ollama_base_url || "") + "</div><div>model " + esc($("modelInput").value) + "</div>";
+      var eng = h.engine || {};
+      var isGroq = !!eng.groq_connected;
+      $("healthDot").className = "dot up";
+      $("healthLabel").textContent = isGroq ? "Groq 70B Online" : "Intel Local Engine";
+      $("healthMeta").innerHTML = "<div>GET /health · 200</div><div>Mode: " + esc(eng.mode || "Auto") + "</div><div>" + esc(eng.primary_model || "Intel CPU") + "</div>";
     }).catch(function () {
       $("healthDot").className = "dot down";
       $("healthLabel").textContent = "API unreachable";
@@ -699,6 +779,8 @@ main { flex: 1; min-width: 0; display: flex; flex-direction: column; }
 
   $("launchBtn").addEventListener("click", launch);
   $("rerunBtn").addEventListener("click", function () { go("console"); launch(); });
+  $("refreshNotesBtn").addEventListener("click", loadNotes);
+  $("refreshPapersBtn").addEventListener("click", loadPapers);
   $("copyBib").addEventListener("click", function () {
     var txt = $("bibOut").textContent;
     var done = function () { $("copyBib").textContent = "Copied to clipboard"; setTimeout(function () { $("copyBib").textContent = "Copy references.bib"; }, 1600); };
@@ -707,7 +789,7 @@ main { flex: 1; min-width: 0; display: flex; flex-direction: column; }
   $("topicInput").addEventListener("input", function (e) { $("topicLabel").textContent = e.target.value || "Untitled query"; });
   $("topicInput").addEventListener("keydown", function (e) { if (e.key === "Enter") launch(); });
 
-  renderNav(); renderStages(); setRunTag(); loadHealth(); loadHistory();
+  renderNav(); renderStages(); setRunTag(); loadHealth(); loadHistory(); loadNotes(); loadPapers();
 })();
 </script>
 </body>

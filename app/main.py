@@ -28,7 +28,10 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+from app.agents.hybrid_engine import HybridLLMEngine
+
 ollama = OllamaClient()
+hybrid_engine = HybridLLMEngine()
 arxiv_client = ArXivClient()
 planner = PlannerAgent(ollama_client=ollama)
 faculty_radar = FacultyRadar()
@@ -41,16 +44,34 @@ def read_root():
         with open("app/templates/index.html", "r", encoding="utf-8") as f:
             return f.read()
     except Exception:
-        return "<h1>AI Academic Research Agent Online</h1>"
+        return "<h1>CiteX Online</h1>"
 
 @app.get("/health")
 async def health_check():
-    ollama_active = await ollama.check_health()
+    status = await hybrid_engine.check_status()
     return {
         "status": "healthy",
-        "ollama_connected": ollama_active,
-        "ollama_base_url": ollama.base_url
+        "engine": status,
+        "ollama_connected": False,
+        "local_intel_connected": True
     }
+
+@app.post("/api/v1/engine/switch")
+def switch_engine(payload: dict):
+    mode = payload.get("mode", "auto")
+    api_key = payload.get("groq_api_key", "")
+    hybrid_engine.set_mode(mode, api_key)
+    return {"status": "updated", "mode": mode}
+
+@app.get("/api/v1/notes/folders")
+def get_notes_folders():
+    """Retrieve all research notes organized by topic folder."""
+    return logger_agent.get_notes_by_folder()
+
+@app.get("/api/v1/papers")
+def get_generated_papers():
+    """Retrieve catalog of all compiled IEEE draft papers."""
+    return logger_agent.get_generated_papers()
 
 @app.get("/api/v1/history")
 def get_research_history():
@@ -59,11 +80,12 @@ def get_research_history():
 
 @app.post("/api/v1/notes")
 def save_research_note(note_data: dict):
-    """Save an active tab / paper note into persistent research_log.json."""
+    """Save an active tab / paper note into persistent research_log.json with folder categorization."""
     title = note_data.get("title", "Untitled Research Note")
     url = note_data.get("url", "")
     note_text = note_data.get("note", "")
-    entry = logger_agent.log_note(title=title, url=url, note_text=note_text)
+    folder = note_data.get("folder", "General Research")
+    entry = logger_agent.log_note(title=title, url=url, note_text=note_text, folder=folder)
     return {"status": "saved", "entry": entry}
 
 @app.get("/api/v1/download-pdf")

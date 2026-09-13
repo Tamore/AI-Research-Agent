@@ -118,13 +118,23 @@ pre.bib-box { margin: 0; font-family: var(--font-mono); font-size: 10.5px; line-
     <input id="topicInput" class="input" type="text" placeholder="Auto-parsed selection or topic…">
   </div>
 
-  <div style="margin-bottom: var(--space-3);">
+  <div class="field" style="margin-bottom: var(--space-3);">
+    <label for="folderSelect">Destination Research Folder</label>
+    <select id="folderSelect" class="input mono" style="height:34px; cursor:pointer;">
+      <option value="Japan Universities Plan B">⛩️ Japan Universities Plan B</option>
+      <option value="Event-Driven & AI Agents">⚡ Event-Driven & AI Agents</option>
+      <option value="General Research">📁 General Research</option>
+      <option value="+new">+ New Folder…</option>
+    </select>
+  </div>
+
+  <div style="margin-bottom: var(--space-2);">
     <button type="button" class="btn btn-primary blueprint" id="parseBtn">
       <i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i>
-      Parse & Summarize Active Tab
+      ⚡ Parse & Summarize Tab
     </button>
   </div>
-  <button type="button" class="btn btn-secondary" id="saveNoteBtn">Save Page to Research Notes</button>
+  <button type="button" class="btn btn-secondary" id="saveNoteBtn">📝 Save to Folder Notebook</button>
 </div>
 
 <!-- NUMBERED VIEWS & TABS MATCHING MAIN CONSOLE -->

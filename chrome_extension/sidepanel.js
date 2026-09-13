@@ -196,6 +196,23 @@ function renderAllViews() {
 function saveQuickNote() {
   const noteBtn = document.getElementById("saveNoteBtn");
   const topic = document.getElementById("topicInput").value.trim();
+  const folderSelect = document.getElementById("folderSelect");
+  let selectedFolder = folderSelect ? folderSelect.value : "General Research";
+
+  if (selectedFolder === "+new") {
+    const custom = prompt("Enter new folder name (e.g. Kyoto Univ Lab, Touch Displays):");
+    if (custom && custom.trim()) {
+      selectedFolder = custom.trim();
+      const opt = document.createElement("option");
+      opt.value = selectedFolder;
+      opt.textContent = "📁 " + selectedFolder;
+      opt.selected = true;
+      folderSelect.insertBefore(opt, folderSelect.firstChild);
+    } else {
+      selectedFolder = "General Research";
+      if (folderSelect) folderSelect.value = "General Research";
+    }
+  }
 
   chrome.tabs.query({ active: true, currentWindow: true }, async (tabs) => {
     if (tabs && tabs[0]) {
@@ -207,6 +224,7 @@ function saveQuickNote() {
       const noteItem = {
         title: title,
         url: url,
+        folder: selectedFolder,
         note: noteContent,
         timestamp: new Date().toISOString()
       };
@@ -228,7 +246,7 @@ function saveQuickNote() {
         // Backend offline, storage still preserved in chrome.storage.local
       }
 
-      const noteMarkdown = `## 📝 Saved Research Note\n- **Title:** ${title}\n- **URL:** [${url}](${url})\n${noteContent ? `\n> ${noteContent}\n` : ""}\n✅ *Stored in persistent research log (\`research_log.json\` & browser storage).*`;
+      const noteMarkdown = `## 📝 Saved Research Note\n- **Folder:** \`${selectedFolder}\`\n- **Title:** ${title}\n- **URL:** [${url}](${url})\n${noteContent ? `\n> ${noteContent}\n` : ""}\n✅ *Stored in persistent research notebook (\`research_log.json\` & browser storage).*`;
       document.getElementById("summaryOut").innerHTML = md(noteMarkdown);
       goView("summary");
 
