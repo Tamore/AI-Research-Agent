@@ -9,6 +9,11 @@ document.addEventListener("DOMContentLoaded", async () => {
   checkApiHealth();
   extractActiveTabInfo();
 
+  // Dynamically update the active tab's title & content whenever you switch tabs
+  chrome.tabs.onActivated.addListener(() => {
+    extractActiveTabInfo();
+  });
+
   document.getElementById("parseBtn").addEventListener("click", runResearch);
   document.getElementById("saveNoteBtn").addEventListener("click", saveQuickNote);
   document.getElementById("copyBib").addEventListener("click", copyBibTeX);
